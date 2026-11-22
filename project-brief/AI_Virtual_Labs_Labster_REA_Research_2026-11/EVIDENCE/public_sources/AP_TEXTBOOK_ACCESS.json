@@ -1,0 +1,608 @@
+{
+  "as_of_ist": "2026-11-22",
+  "catalogue": "https://cse.ap.gov.in/loadacademictextbookpublicview",
+  "form_filter": "academic year 2026-2027, Classes 6-10, Telugu-English and English separately",
+  "form_results": {
+    "17/6": {
+      "grade": 6,
+      "medium": "Telugu-English",
+      "all_returned_titles": 10,
+      "science_titles": [
+        "SEM1-TEXT BOOK FOR SCIENCE- CLASS 6",
+        "SEM2-TEXT BOOK FOR SCIENCE- CLASS 6"
+      ]
+    },
+    "17/7": {
+      "grade": 7,
+      "medium": "Telugu-English",
+      "all_returned_titles": 10,
+      "science_titles": [
+        "SEM1-TEXT BOOK FOR SCIENCE- CLASS 7",
+        "SEM2-TEXT BOOK FOR SCIENCE- CLASS 7"
+      ]
+    },
+    "17/8": {
+      "grade": 8,
+      "medium": "Telugu-English",
+      "all_returned_titles": 10,
+      "science_titles": [
+        "SEM1-TEXT BOOK FOR SCIENCE- CLASS 8",
+        "SEM2-TEXT BOOK FOR SCIENCE- CLASS 8"
+      ]
+    },
+    "17/9": {
+      "grade": 9,
+      "medium": "Telugu-English",
+      "all_returned_titles": 11,
+      "science_titles": [
+        "SEM1-TEXT BOOK FOR GENERAL SCIENCE- CLASS 9",
+        "SEM2-TEXT BOOK FOR GENERAL SCIENCE- CLASS 9"
+      ]
+    },
+    "17/10": {
+      "grade": 10,
+      "medium": "Telugu-English",
+      "all_returned_titles": 14,
+      "science_titles": [
+        "TEXT BOOK FOR PHYSICAL SCIENCES- CLASS 10",
+        "TEXT BOOK FOR BIOLOGICAL SCIENCE- CLASS 10"
+      ]
+    },
+    "19/6": {
+      "grade": 6,
+      "medium": "English",
+      "all_returned_titles": 0,
+      "science_titles": []
+    },
+    "19/7": {
+      "grade": 7,
+      "medium": "English",
+      "all_returned_titles": 0,
+      "science_titles": []
+    },
+    "19/8": {
+      "grade": 8,
+      "medium": "English",
+      "all_returned_titles": 0,
+      "science_titles": []
+    },
+    "19/9": {
+      "grade": 9,
+      "medium": "English",
+      "all_returned_titles": 0,
+      "science_titles": []
+    },
+    "19/10": {
+      "grade": 10,
+      "medium": "English",
+      "all_returned_titles": 0,
+      "science_titles": []
+    }
+  },
+  "books": [
+    {
+      "source_id": "AP-TB-06-1",
+      "grade": 6,
+      "title": "SEM1-TEXT BOOK FOR SCIENCE- CLASS 6",
+      "url": "https://cse.ap.gov.in/loadsupdocumentuploadbyid?req_doc_id=2026-2027T06170032609191036008WUX6",
+      "fetched": "",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 0,
+      "academic_year_filter": "2026-2027",
+      "medium_label": "Telugu-English",
+      "status": "LISTED_EMPTY_BODY"
+    },
+    {
+      "source_id": "AP-TB-06-2",
+      "grade": 6,
+      "title": "SEM2-TEXT BOOK FOR SCIENCE- CLASS 6",
+      "url": "https://cse.ap.gov.in/loadsupdocumentuploadbyid?req_doc_id=2026-2027T06170092611141714632SHRW",
+      "fetched": "pdf_text_extracted",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 16665674,
+      "pages": 282,
+      "sha256": "ecb4f07da05fe1ef3ae8f806e8d2f944a608661d6d30b7717ea72f01c210a10c",
+      "metadata_edition_clues": {
+        "title": "",
+        "creationDate": "D:20261114154812+05'30'",
+        "modDate": "D:20261114154812+05'30'"
+      },
+      "academic_year_filter": "2026-2027",
+      "medium_label": "Telugu-English",
+      "status": "ACQUIRED"
+    },
+    {
+      "source_id": "AP-TB-07-1",
+      "grade": 7,
+      "title": "SEM1-TEXT BOOK FOR SCIENCE- CLASS 7",
+      "url": "https://cse.ap.gov.in/loadsupdocumentuploadbyid?req_doc_id=2026-2027T07170032609191038091EXTQ",
+      "fetched": "",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 0,
+      "academic_year_filter": "2026-2027",
+      "medium_label": "Telugu-English",
+      "status": "LISTED_EMPTY_BODY"
+    },
+    {
+      "source_id": "AP-TB-07-2",
+      "grade": 7,
+      "title": "SEM2-TEXT BOOK FOR SCIENCE- CLASS 7",
+      "url": "https://cse.ap.gov.in/loadsupdocumentuploadbyid?req_doc_id=2026-2027T07170092611141715059TJDF",
+      "fetched": "pdf_text_extracted",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 21835414,
+      "pages": 234,
+      "sha256": "5ed7008d514a0df9920d745b9d009d561416e513a3badb7bd4236eeb50fd9ea3",
+      "metadata_edition_clues": {
+        "title": "",
+        "creationDate": "D:20261114163531+05'30'",
+        "modDate": "D:20261114163531+05'30'"
+      },
+      "academic_year_filter": "2026-2027",
+      "medium_label": "Telugu-English",
+      "status": "ACQUIRED"
+    },
+    {
+      "source_id": "AP-TB-08-1",
+      "grade": 8,
+      "title": "SEM1-TEXT BOOK FOR SCIENCE- CLASS 8",
+      "url": "https://cse.ap.gov.in/loadsupdocumentuploadbyid?req_doc_id=2026-2027T0817003260919103850386J7",
+      "fetched": "",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 0,
+      "academic_year_filter": "2026-2027",
+      "medium_label": "Telugu-English",
+      "status": "LISTED_EMPTY_BODY"
+    },
+    {
+      "source_id": "AP-TB-08-2",
+      "grade": 8,
+      "title": "SEM2-TEXT BOOK FOR SCIENCE- CLASS 8",
+      "url": "https://cse.ap.gov.in/loadsupdocumentuploadbyid?req_doc_id=2026-2027T08170092611141717074CXHP",
+      "fetched": "pdf_text_extracted",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 172973140,
+      "pages": 290,
+      "sha256": "211641fd4d523c8ff5ad80abd83854f4bd634194de2ebacd2a90a7a5d8600714",
+      "metadata_edition_clues": {
+        "title": "",
+        "creationDate": "D:20261114164111+05'30'",
+        "modDate": "D:20261114164111+05'30'"
+      },
+      "academic_year_filter": "2026-2027",
+      "medium_label": "Telugu-English",
+      "status": "ACQUIRED_OCR_FOR_ACTIVITY_SCREEN"
+    },
+    {
+      "source_id": "AP-TB-09-1",
+      "grade": 9,
+      "title": "SEM1-TEXT BOOK FOR GENERAL SCIENCE- CLASS 9",
+      "url": "https://cse.ap.gov.in/loadsupdocumentuploadbyid?req_doc_id=2026-2027T09170042609191132682VRMM",
+      "fetched": "",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 0,
+      "academic_year_filter": "2026-2027",
+      "medium_label": "Telugu-English",
+      "status": "LISTED_EMPTY_BODY"
+    },
+    {
+      "source_id": "AP-TB-09-2",
+      "grade": 9,
+      "title": "SEM2-TEXT BOOK FOR GENERAL SCIENCE- CLASS 9",
+      "url": "https://cse.ap.gov.in/loadsupdocumentuploadbyid?req_doc_id=2026-2027T09170102611151137444E4TT",
+      "fetched": "pdf_text_extracted",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 9203234,
+      "pages": 142,
+      "sha256": "6fb8b7399fb0478cd2608ee8b7e0e8e6eefb24a21a15ff1cac9f49d18caaf1cb",
+      "metadata_edition_clues": {
+        "title": "",
+        "creationDate": "D:20261115112612+05'30'",
+        "modDate": "D:20261115112612+05'30'"
+      },
+      "academic_year_filter": "2026-2027",
+      "medium_label": "Telugu-English",
+      "status": "ACQUIRED"
+    },
+    {
+      "source_id": "AP-TB-10-1",
+      "grade": 10,
+      "title": "TEXT BOOK FOR PHYSICAL SCIENCES- CLASS 10",
+      "url": "https://cse.ap.gov.in/loadsupdocumentuploadbyid?req_doc_id=2026-2027T10170072609191213092ZEWU",
+      "fetched": "",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 0,
+      "academic_year_filter": "2026-2027",
+      "medium_label": "Telugu-English",
+      "status": "LISTED_EMPTY_BODY"
+    },
+    {
+      "source_id": "AP-TB-10-2",
+      "grade": 10,
+      "title": "TEXT BOOK FOR BIOLOGICAL SCIENCE- CLASS 10",
+      "url": "https://cse.ap.gov.in/loadsupdocumentuploadbyid?req_doc_id=2026-2027T101700826091912167586NT8",
+      "fetched": "",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 0,
+      "academic_year_filter": "2026-2027",
+      "medium_label": "Telugu-English",
+      "status": "LISTED_EMPTY_BODY"
+    },
+    {
+      "source_id": "AP-REF-10-1",
+      "grade": 10,
+      "title": "10_Biology_Textbook_BM_2024-25",
+      "url": "https://cse.ap.gov.in/downloadBooks/Biology%20Books/10_Biology_Textbook_BM_2024-25.pdf/10",
+      "fetched": "pdf_text_extracted",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 184102199,
+      "pages": 134,
+      "sha256": "03aae720e54443dfbf6edf8d7ac1594021389e6e52df66627c51dedf95b34fb4",
+      "metadata_edition_clues": {
+        "title": "Biology initial pages.cdr",
+        "creationDate": "D:20240226170643+05'30'",
+        "modDate": "D:20240427160836+05'30'"
+      },
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "ACQUIRED"
+    },
+    {
+      "source_id": "AP-REF-10-2",
+      "grade": 10,
+      "title": "10_Physics_textbook",
+      "url": "https://cse.ap.gov.in/downloadBooks/Physics%20Books/10_Physics_textbook_2024-25.pdf/10",
+      "fetched": "pdf_text_extracted",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 151859376,
+      "pages": 322,
+      "sha256": "580246d3e566c8a143f2afe6471cbc18be5a2617c2147a0358dc737ba6f5ee41",
+      "metadata_edition_clues": {
+        "title": "",
+        "creationDate": "D:20240326145223+05'30'",
+        "modDate": "D:20240427160807+05'30'"
+      },
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "ACQUIRED"
+    },
+    {
+      "source_id": "AP-REF-10-3",
+      "grade": 10,
+      "title": "10_Biology_EM_Textbook",
+      "url": "https://cse.ap.gov.in/downloadBooks/Biology%20Books/10_Biology_EM_Textbook.pdf/10",
+      "fetched": "",
+      "http": 200,
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 29424,
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "UNVERIFIED_NO_PDF"
+    },
+    {
+      "source_id": "AP-REF-10-4",
+      "grade": 10,
+      "title": "10_Physics_EM_Textbook",
+      "url": "https://cse.ap.gov.in/downloadBooks/Physics%20Books/10_Physics_EM_Textbook.pdf/10",
+      "fetched": "",
+      "http": 200,
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 29388,
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "UNVERIFIED_NO_PDF"
+    },
+    {
+      "source_id": "AP-REF-09-1",
+      "grade": 9,
+      "title": "9_Biology_Textbook",
+      "url": "https://cse.ap.gov.in/downloadBooks/Biology%20Books/9_Biology_Textbook.pdf/9",
+      "fetched": "pdf_text_extracted",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 29265891,
+      "pages": 90,
+      "sha256": "0f71d7fba557f3623f4b623eb20055e10dbf86bdd20e9707ed9a9d0acc536889",
+      "metadata_edition_clues": {
+        "title": "9 (AP) PS & BIOLOGY.cdr",
+        "creationDate": "D:20240424161425+05'30'",
+        "modDate": "D:20240427141500+05'30'"
+      },
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "ACQUIRED"
+    },
+    {
+      "source_id": "AP-REF-09-2",
+      "grade": 9,
+      "title": "9_Physics_SEM-1_Textbook",
+      "url": "https://cse.ap.gov.in/downloadBooks/Physics%20Books/9_Physics_SEM-1_Textbook.pdf/9",
+      "fetched": "pdf_text_extracted",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 14816831,
+      "pages": 150,
+      "sha256": "8a83c075d5f2528f21f314ee8cbf9e839b22c27acc328d66c064a0a3e412be07",
+      "metadata_edition_clues": {
+        "title": "9th Class physics Title.cdr",
+        "creationDate": "D:20240424161639+05'30'",
+        "modDate": "D:20240427141923+05'30'"
+      },
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "ACQUIRED"
+    },
+    {
+      "source_id": "AP-REF-09-3",
+      "grade": 9,
+      "title": "9_Physics_SEM-1_Textbook",
+      "url": "https://cse.ap.gov.in/downloadBooks/Physics%20Books/9_Physics_SEM-2_Textbook.pdf/9",
+      "fetched": "pdf_text_extracted",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 14933399,
+      "pages": 126,
+      "sha256": "4267743332c25a291a485dba04079d4ccc422a2094631131a9640418bb74c2c8",
+      "metadata_edition_clues": {
+        "title": "9th Class physics Title.cdr",
+        "creationDate": "D:20240424161745+05'30'",
+        "modDate": "D:20240427142002+05'30'"
+      },
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "ACQUIRED"
+    },
+    {
+      "source_id": "AP-REF-06-1",
+      "grade": 6,
+      "title": "6_Science_SEM-1_Textbook",
+      "url": "https://cse.ap.gov.in/downloadBooks/Science%20Books/6_Science_SEM-1_Textbook.pdf/6",
+      "fetched": "pdf_text_extracted",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 36812947,
+      "pages": 166,
+      "sha256": "e954e888fab3ccd83ab82449deaf43141e9de458b7ca9ee8352889f7e4cf28a3",
+      "metadata_edition_clues": {
+        "title": "6th Science Cover Page.cdr",
+        "creationDate": "D:20240424161842+05'30'",
+        "modDate": "D:20240427134602+05'30'"
+      },
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "ACQUIRED"
+    },
+    {
+      "source_id": "AP-REF-06-2",
+      "grade": 6,
+      "title": "6_General Science_SEM-1_Textbook",
+      "url": "https://cse.ap.gov.in/downloadBooks/General%20Science%20Books/6_General%20Science_SEM-1_Textbook.pdf/6",
+      "fetched": "",
+      "http": 200,
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 29420,
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "UNVERIFIED_NO_PDF"
+    },
+    {
+      "source_id": "AP-REF-06-3",
+      "grade": 6,
+      "title": "6_General Science_SEM-2_Textbook",
+      "url": "https://cse.ap.gov.in/downloadBooks/General%20Science%20Books/6_General%20Science_SEM-2_Textbook.pdf/6",
+      "fetched": "",
+      "http": 200,
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 29469,
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "UNVERIFIED_NO_PDF"
+    },
+    {
+      "source_id": "AP-REF-07-1",
+      "grade": 7,
+      "title": "7_Science_SEM-1_Textbook",
+      "url": "https://cse.ap.gov.in/downloadBooks/Science%20Books/7_Science_SEM-1_Textbook.pdf/7",
+      "fetched": "pdf_text_extracted",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 34995565,
+      "pages": 186,
+      "sha256": "ce92c14a0747a70ce44186eafcd39ee336f0773ed0d0c586bc98db1b6e8a29a2",
+      "metadata_edition_clues": {
+        "title": "7th Science Titles.cdr",
+        "creationDate": "D:20240424161928+05'30'",
+        "modDate": "D:20240427135523+05'30'"
+      },
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "ACQUIRED"
+    },
+    {
+      "source_id": "AP-REF-07-2",
+      "grade": 7,
+      "title": "7_General Science_SEM-1_Textbook",
+      "url": "https://cse.ap.gov.in/downloadBooks/General%20Science%20Books/7_General%20Science_SEM-1_Textbook.pdf/7",
+      "fetched": "",
+      "http": 200,
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 29311,
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "UNVERIFIED_NO_PDF"
+    },
+    {
+      "source_id": "AP-REF-07-3",
+      "grade": 7,
+      "title": "7_General Science_SEM-2_Textbook",
+      "url": "https://cse.ap.gov.in/downloadBooks/General%20Science%20Books/7_General%20Science_SEM-2_Textbook.pdf/7",
+      "fetched": "",
+      "http": 200,
+      "content_type": "text/html;charset=ISO-8859-1",
+      "bytes": 29270,
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "UNVERIFIED_NO_PDF"
+    },
+    {
+      "source_id": "AP-REF-08-1",
+      "grade": 8,
+      "title": "8_Biology_SEM-1_Textbook",
+      "url": "https://cse.ap.gov.in/downloadBooks/Biology%20Books/8_Biology_SEM-1_Textbook.pdf/8",
+      "fetched": "pdf_text_extracted",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 36198021,
+      "pages": 138,
+      "sha256": "b9b24f845e41431c4b8bf41d931a2aef50c86acdc8c6ec2ea99aa862c1e317ab",
+      "metadata_edition_clues": {
+        "title": "8th Biology Title.cdr",
+        "creationDate": "D:20240424161308+05'30'",
+        "modDate": "D:20240427140111+05'30'"
+      },
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "ACQUIRED"
+    },
+    {
+      "source_id": "AP-REF-08-2",
+      "grade": 8,
+      "title": "8_Biology_SEM-2_Textbook",
+      "url": "https://cse.ap.gov.in/downloadBooks/Biology%20Books/8_Biology_SEM-2_Textbook.pdf/8",
+      "fetched": "pdf_text_extracted",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 31144676,
+      "pages": 102,
+      "sha256": "cb4e1c4b58a4d3c21593020d2156dd5914e87e8a8ca9d2b8b15c0e074c671b72",
+      "metadata_edition_clues": {
+        "title": "8th Biology Title.cdr",
+        "creationDate": "D:20240424161344+05'30'",
+        "modDate": "D:20240427140207+05'30'"
+      },
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "ACQUIRED"
+    },
+    {
+      "source_id": "AP-REF-08-3",
+      "grade": 8,
+      "title": "8_Physics_SEM-1_Textbook",
+      "url": "https://cse.ap.gov.in/downloadBooks/Physics%20Books/8_Physics_SEM-1_Textbook.pdf/8",
+      "fetched": "pdf_text_extracted",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 33122014,
+      "pages": 174,
+      "sha256": "e3a567a6f01853604939c47ff879e2abb7948fdd0b97fbf52bf33b1f7de788c9",
+      "metadata_edition_clues": {
+        "title": "8th Physics Title.cdr",
+        "creationDate": "D:20240424161514+05'30'",
+        "modDate": "D:20240427140811+05'30'"
+      },
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "ACQUIRED"
+    },
+    {
+      "source_id": "AP-REF-08-4",
+      "grade": 8,
+      "title": "8_Physics_SEM-2_Textbook",
+      "url": "https://cse.ap.gov.in/downloadBooks/Physics%20Books/8_Physics_SEM-2_Textbook.pdf/8",
+      "fetched": "pdf_text_extracted",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 36184024,
+      "pages": 178,
+      "sha256": "8ae032df47cb9856a0ace95f89a07c2d3a5924f820f0cdbb6e6b3784e3583de3",
+      "metadata_edition_clues": {
+        "title": "8th Physics Title.cdr",
+        "creationDate": "D:20240424161601+05'30'",
+        "modDate": "D:20240427140907+05'30'"
+      },
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "ACQUIRED"
+    },
+    {
+      "source_id": "AP-MIRROR-10-1",
+      "grade": 10,
+      "title": "Current grade 10 Physical Science from AP Samagra mirror",
+      "url": "https://samagrashiksha.ap.gov.in/loadsupdocumentuploadbyid?req_doc_id=2026-2027T10170072609191213092ZEWU",
+      "fetched": "",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 0,
+      "academic_year_filter": "2026-2027",
+      "medium_label": "Telugu-English",
+      "status": "LISTED_EMPTY_BODY"
+    },
+    {
+      "source_id": "AP-MIRROR-10-2",
+      "grade": 10,
+      "title": "Current grade 10 Biology from AP Samagra mirror",
+      "url": "https://samagrashiksha.ap.gov.in/loadsupdocumentuploadbyid?req_doc_id=2026-2027T101700826091912167586NT8",
+      "fetched": "",
+      "http": 200,
+      "content_type": "application/pdf",
+      "bytes": 0,
+      "academic_year_filter": "2026-2027",
+      "medium_label": "Telugu-English",
+      "status": "LISTED_EMPTY_BODY"
+    },
+    {
+      "source_id": "AP-REF-10-PS",
+      "grade": 10,
+      "title": "AP SCERT Class 10 Physical Science legacy indexed UM-file variant",
+      "url": "https://cse.ap.gov.in/downloadBooks/Physics%20Books/10_Physics_Textbook_UM.pdf/10",
+      "http": 200,
+      "bytes": 34394766,
+      "content_type": "application/pdf",
+      "pages": 321,
+      "sha256": "b03d1abb78f533367935e7de72955b8e65823fb223b2357166b846631c1d2b69",
+      "metadata_edition_clues": {
+        "format": "PDF 1.6",
+        "title": "",
+        "author": "",
+        "subject": "",
+        "keywords": "",
+        "creator": "Adobe Acrobat Pro Extended 9.0.0",
+        "producer": "PDF-XChange 4.0.163.0 [ABBYY] (Windows   (Build 9200))",
+        "creationDate": "D:20240108174435+05'30'",
+        "modDate": "D:20240630194821+05'30'",
+        "trapped": "",
+        "encryption": null
+      },
+      "fetched": "pdf_text_extracted",
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "ACQUIRED"
+    },
+    {
+      "source_id": "AP-REF-10-BS",
+      "grade": 10,
+      "title": "AP SCERT Class 10 Biology legacy indexed UM-file variant",
+      "url": "https://cse.ap.gov.in/downloadBooks/Biology%20Books/10_Biology_Textbook_UM.pdf/10",
+      "http": 200,
+      "bytes": 29501,
+      "content_type": "text/html;charset=ISO-8859-1",
+      "academic_year_filter": "not_applied_legacy_index",
+      "medium_label": "legacy-index variants, see notes",
+      "status": "UNVERIFIED_NO_PDF"
+    }
+  ],
+  "current_grade_8_semester_2_english_ocr_pages_attempted": 199,
+  "rights": "Original audit summary, links and checksums only. Source PDFs and page images were used locally for research and excluded from distribution."
+}

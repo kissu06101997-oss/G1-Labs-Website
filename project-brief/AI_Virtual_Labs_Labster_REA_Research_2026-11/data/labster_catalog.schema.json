@@ -1,0 +1,318 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Labster observed public catalogue",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "research_id",
+      "canonical_url",
+      "public_title",
+      "vendor_subject_tags",
+      "vendor_course_matches",
+      "education_levels",
+      "detail_education_levels",
+      "duration_min",
+      "duration_evidence",
+      "detail_duration_min",
+      "language_options",
+      "vendor_accessibility_mode",
+      "subtopic",
+      "subtopic_evidence",
+      "published_summary_ref",
+      "published_summary_paraphrase",
+      "published_objectives_ref",
+      "published_objectives_count",
+      "published_nonoperational_technique_labels",
+      "reported_outputs_or_observations",
+      "reported_inputs",
+      "reported_apparatus_or_materials",
+      "reported_prerequisites_or_safety",
+      "reported_quizzes_or_feedback",
+      "reported_controls",
+      "reported_pedagogical_format",
+      "play_status",
+      "media_reference",
+      "media_rights",
+      "our_candidate_subject",
+      "our_possible_reuse",
+      "our_estimated_complexity",
+      "our_science_risk",
+      "ap_curriculum_crosswalk_status",
+      "evidence_class",
+      "field_group_confidence",
+      "catalog_page_source_id",
+      "detail_source_id",
+      "catalog_page_url",
+      "catalog_page",
+      "catalog_position",
+      "retrieved_ist",
+      "detail_index_age_at_review",
+      "known_unknowns"
+    ],
+    "properties": {
+      "research_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "canonical_url": {
+        "type": "string",
+        "minLength": 1
+      },
+      "public_title": {
+        "type": "string",
+        "minLength": 1
+      },
+      "vendor_subject_tags": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "items": {
+          "type": "string"
+        },
+        "uniqueItems": true
+      },
+      "vendor_course_matches": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "items": {
+          "type": "string"
+        },
+        "uniqueItems": true
+      },
+      "education_levels": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "items": {
+          "type": "string"
+        },
+        "uniqueItems": true
+      },
+      "detail_education_levels": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "items": {
+          "type": "string"
+        },
+        "uniqueItems": true
+      },
+      "duration_min": {
+        "type": [
+          "integer",
+          "null"
+        ],
+        "minimum": 0
+      },
+      "duration_evidence": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "detail_duration_min": {
+        "type": [
+          "integer",
+          "null"
+        ],
+        "minimum": 0
+      },
+      "language_options": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "items": {
+          "type": "string"
+        },
+        "uniqueItems": true
+      },
+      "vendor_accessibility_mode": {
+        "type": [
+          "boolean",
+          "null"
+        ]
+      },
+      "subtopic": {
+        "type": "string",
+        "minLength": 1
+      },
+      "subtopic_evidence": {
+        "type": "string",
+        "minLength": 1
+      },
+      "published_summary_ref": {
+        "type": "string",
+        "minLength": 1
+      },
+      "published_summary_paraphrase": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "published_objectives_ref": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "published_objectives_count": {
+        "type": [
+          "integer",
+          "null"
+        ],
+        "minimum": 0
+      },
+      "published_nonoperational_technique_labels": {
+        "type": [
+          "array",
+          "null"
+        ],
+        "items": {
+          "type": "string"
+        },
+        "uniqueItems": true
+      },
+      "reported_outputs_or_observations": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "reported_inputs": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "reported_apparatus_or_materials": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "reported_prerequisites_or_safety": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "reported_quizzes_or_feedback": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "reported_controls": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "reported_pedagogical_format": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "play_status": {
+        "type": "string",
+        "minLength": 1
+      },
+      "media_reference": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "media_rights": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "our_candidate_subject": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "our_possible_reuse": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "our_estimated_complexity": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "our_science_risk": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "ap_curriculum_crosswalk_status": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "evidence_class": {
+        "type": "string",
+        "minLength": 1
+      },
+      "field_group_confidence": {
+        "type": "string",
+        "minLength": 1
+      },
+      "catalog_page_source_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "detail_source_id": {
+        "type": "string",
+        "minLength": 1
+      },
+      "catalog_page_url": {
+        "type": "string",
+        "minLength": 1
+      },
+      "catalog_page": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "catalog_position": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "retrieved_ist": {
+        "type": "string",
+        "minLength": 1
+      },
+      "detail_index_age_at_review": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "known_unknowns": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    }
+  }
+}

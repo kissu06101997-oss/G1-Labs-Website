@@ -1,0 +1,131 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import {
+  apiError,
+  attachSessionCookies,
+  checkAuthRateLimit,
+  clearAuthRateLimit,
+  createAuthSession,
+  recordAuditEvent,
+} from "@/lib/auth";
+import { verifyPassword } from "@/lib/crypto";
+import { query } from "@/lib/db";
+import type { Locale, PrincipalRole } from "@/lib/types";
+
+const signInSchema = z.object({
+  email: z.string().email().max(200),
+  password: z.string().min(8).max(128),
+});
+
+export async function POST(req: NextRequest) {
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return apiError(400, "STATE_CONFLICT", "Invalid JSON body.");
+  }
+
+  const parsed = signInSchema.safeParse(body);
+  if (!parsed.success) {
+    return apiError(400, "STATE_CONFLICT", "Enter a valid school account email and password.");
+  }
+
+  const email = parsed.data.email.trim().toLowerCase();
+  const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+  const rateKey = `${email}:${clientIp}`;
+
+  if (!checkAuthRateLimit(rateKey)) {
+    return apiError(429, "RATE_LIMITED", "Too many sign-in attempts. Wait before trying again.");
+  }
+
+  const userRes = await query<{
+    principal_id: string;
+    email: string;
+    display_name: string;
+    password_hash: string;
+    password_salt: string;
+    is_synthetic: boolean;
+    enabled: boolean;
+    preferred_locale: Locale;
+  }>(
+    `SELECT
+       p.principal_id,
+       c.email,
+       c.display_name,
+       c.password_hash,
+       c.password_salt,
+       c.is_synthetic,
+       p.enabled,
+       p.preferred_locale
+     FROM principal_credential c
+     JOIN principal p ON p.principal_id = c.principal_id
+     WHERE LOWER(c.email) = $1
+     LIMIT 1`,
+    [email]
+  );
+
+  const user = userRes.rows[0];
+  if (!user || !user.enabled || !verifyPassword(parsed.data.password, user.password_salt, user.password_hash)) {
+    return apiError(401, "NOT_AUTHORIZED", "Invalid account credentials.");
+  }
+
+  const roleRes = await query<{
+    role: PrincipalRole;
+    school_id: string | null;
+    district_id: string | null;
+  }>(
+    `SELECT role, school_id, district_id
+     FROM role_grant
+     WHERE principal_id = $1 AND revoked_at IS NULL
+     ORDER BY grant_id ASC
+     LIMIT 1`,
+    [user.principal_id]
+  );
+
+  const grant = roleRes.rows[0];
+  if (!grant) {
+    return apiError(403, "NOT_AUTHORIZED", "Account has no active authorized role.");
+  }
+
+  clearAuthRateLimit(rateKey);
+  const session = await createAuthSession(
+    user.principal_id,
+    grant.role,
+    grant.school_id,
+    grant.district_id
+  );
+
+  await recordAuditEvent({
+    schoolId: grant.school_id,
+    actionType: "auth.sign_in",
+    actorId: user.principal_id,
+    subjectKey: `${user.principal_id}:${grant.role}`,
+    retentionClass: "operational_short",
+  });
+
+  const redirectTo =
+    grant.role === "student"
+      ? "/student"
+      : grant.role === "teacher"
+        ? "/teacher"
+        : grant.role === "content_editor" || grant.role === "content_reviewer"
+          ? "/content"
+          : "/admin";
+
+  const response = NextResponse.json({
+    authenticated: true,
+    role: grant.role,
+    displayName: user.display_name,
+    preferredLocale: user.preferred_locale,
+    redirectTo,
+  });
+
+  attachSessionCookies(
+    response,
+    session.rawToken,
+    session.csrfToken,
+    user.preferred_locale,
+    session.expiresAt
+  );
+  return response;
+}

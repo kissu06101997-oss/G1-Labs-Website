@@ -1,0 +1,8 @@
+"reuse_id","description","chemistry_asset_ids","physics_asset_ids","biology_asset_ids","shared_asset_ids","reuse_boundary"
+"RES-01","Semantic grip and hand state","AS-C-001;AS-C-008","AS-P-001;AS-P-003","AS-B-002;AS-B-003","AS-S-001","Same skeleton and pose binding; fit poses authored per item"
+"RES-02","Bench socket graph","AS-C-002;AS-C-003","AS-P-005;AS-P-007","AS-B-001;AS-B-002","AS-S-002","Common occupancy, validation, revision and cancel semantics"
+"RES-03","Transparent material and reading","AS-C-001;AS-C-005;AS-C-006","AS-P-001;AS-P-004","AS-B-002;AS-B-005","AS-S-003","Share surface rendering and signposting; quantities remain in model"
+"RES-04","Constrained control and calibration","AS-C-005;AS-C-010","AS-P-004;AS-P-008","AS-B-001;AS-B-005","AS-S-003","Share locale and semantic control, diverse units and uncertainty"
+"RES-05","Dosing and material provenance","AS-C-007;AS-C-008","AS-P-010","AS-B-007","AS-S-002","Reuse measurement inventory; event semantics by subject"
+"RES-06","Observation cue and replay","AS-C-001","AS-P-001","AS-B-004","AS-S-004","Cue follows one confirmed event through GPU swap"
+"RES-07","Room variations","AS-C-001;AS-C-006","AS-P-005;AS-P-007;AS-P-009","AS-B-001;AS-B-006;AS-B-008","AS-S-002","Reuse workstations and fixtures across lessons while preserving subject IDs"

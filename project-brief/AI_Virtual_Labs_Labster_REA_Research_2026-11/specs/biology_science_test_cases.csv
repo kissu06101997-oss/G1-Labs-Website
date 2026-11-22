@@ -1,0 +1,5 @@
+"test_id","mode","fixture_or_requirement","expected","evidence_status"
+"BIO-T01","both","signed approved objective and acquired plane","Return exact image digest and coordinate system","blocked dataset"
+"BIO-T02","experiment","100 px and synthetic 0.50 µm/px","50 µm conversion, explicitly synthetic","exact arithmetic only"
+"BIO-T03","both","missing scale or out-of-manifest field","Suppress physical length or reject invalid field","software design"
+"BIO-T04","both","held-out approved fields and annotations","Independent agreement and uncertainty sign-off","blocked dataset"

@@ -1,0 +1,20 @@
+{
+  "sources": 455,
+  "labster_cards": 311,
+  "labster_known_detail_routes": 312,
+  "ap_candidates": 340,
+  "subject_counts": {
+    "Biology": 90,
+    "Chemistry": 120,
+    "Physics": 130
+  },
+  "markdown_files_checked": 34,
+  "json_files_checked": 15,
+  "csv_files_checked": 31,
+  "openapi_paths": 9,
+  "postgresql_statements_parsed": 35,
+  "schema_examples_checked": 12,
+  "cost_cases": 9,
+  "traceability_requirements": 17,
+  "chapters": 19
+}

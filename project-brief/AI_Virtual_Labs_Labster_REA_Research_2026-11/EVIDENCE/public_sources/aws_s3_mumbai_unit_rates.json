@@ -1,0 +1,64 @@
+{
+  "source_id": "PL-S3-MUM",
+  "retrieved_ist": "2026-11-22",
+  "classification": "PUBLISHED",
+  "source_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/20261121172919/ap-south-1/index.json",
+  "source_offer_version": "20261121172919",
+  "publication_date_utc": "2026-11-21T17:29:19Z",
+  "upstream_size_bytes": 518642,
+  "upstream_sha256": "681d7c64bf84c786714237de19ab1cd06c8953de8367b8a9d1165e9f25f0e0f2",
+  "scope": "Only three selected public regional standard storage and request SKUs. Unit rate evidence; not proof of actual expenditure or tender rates.",
+  "sku_records": [
+    {
+      "sku": "USGUTP2JY23N9GH2",
+      "usage_type": "APS3-TimedStorage-ByteHrs",
+      "region": "ap-south-1",
+      "on_demand_dimensions": [
+        {
+          "begin_range": "0",
+          "end_range": "51200",
+          "unit": "GB-Mo",
+          "usd": "0.0250000000"
+        },
+        {
+          "begin_range": "51200",
+          "end_range": "512000",
+          "unit": "GB-Mo",
+          "usd": "0.0240000000"
+        },
+        {
+          "begin_range": "512000",
+          "end_range": "Inf",
+          "unit": "GB-Mo",
+          "usd": "0.0230000000"
+        }
+      ]
+    },
+    {
+      "sku": "UJ844B8DVMQUFJQP",
+      "usage_type": "APS3-Requests-Tier1",
+      "region": "ap-south-1",
+      "on_demand_dimensions": [
+        {
+          "begin_range": "0",
+          "end_range": "Inf",
+          "unit": "Requests",
+          "usd": "0.0000050000"
+        }
+      ]
+    },
+    {
+      "sku": "SF3QQQMZGA3PPF33",
+      "usage_type": "APS3-Requests-Tier2",
+      "region": "ap-south-1",
+      "on_demand_dimensions": [
+        {
+          "begin_range": "0",
+          "end_range": "Inf",
+          "unit": "Requests",
+          "usd": "0.0000004000"
+        }
+      ]
+    }
+  ]
+}

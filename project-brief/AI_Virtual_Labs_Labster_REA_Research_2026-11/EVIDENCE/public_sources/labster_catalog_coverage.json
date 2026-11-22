@@ -1,0 +1,76 @@
+{
+  "date_ist": "2026-11-22",
+  "catalogue_card_counts_by_page": {
+    "1": 100,
+    "2": 100,
+    "3": 100,
+    "4": 11
+  },
+  "catalogue_unique_titles": 311,
+  "catalogue_cards": 311,
+  "distinct_canonical_detail_urls": 311,
+  "indexed_anchors_resolved": 311,
+  "subject_memberships_nonexclusive": {
+    "Biology": 261,
+    "Chemistry": 240,
+    "Health Sciences": 199,
+    "Physics": 36
+  },
+  "no_subject_tags_on_card": 24,
+  "unknown_subject_tag_card": 0,
+  "multi_subject_card_count": 268,
+  "education_level_card_memberships_nonexclusive": {
+    "High School": 311,
+    "Higher Education": 311
+  },
+  "education_level_detail_memberships_nonexclusive": {
+    "High School": 284,
+    "Higher Education": 302
+  },
+  "education_level_detail_known": 311,
+  "education_level_card_detail_differences": 33,
+  "duration_observed": 306,
+  "duration_min_median_max": [
+    6,
+    25.0,
+    74
+  ],
+  "card_detail_duration_mismatches": [],
+  "recognized_languages_from_detail": {
+    "English": 310,
+    "French": 128,
+    "German": 129,
+    "Italian": 108,
+    "Spanish": 170
+  },
+  "cards_with_language_metadata": 311,
+  "cards_with_course_metadata": 291,
+  "cards_with_objectives_counts": 311,
+  "vendor_accessibility_mode_counts": {
+    "true": 181,
+    "false": 130
+  },
+  "editorially_summarized_details": 12,
+  "gameplay_walkthroughs_by_catalogue_researcher": 0,
+  "archived_october_sources": {
+    "simulations": 311,
+    "simulation-courses": 29,
+    "collections": 34,
+    "simulation-units": 286,
+    "skills": 10,
+    "simulation-disciplines": 0
+  },
+  "archived_october_sitemap_intersection": 310,
+  "archived_october_sitemap_only_paths": [
+    "https://www.labster.com/simulations/absorption-in-the-small-and-large-intestines-journey-from-the-stomach-to-the-bloodstream"
+  ],
+  "catalogue_only_relative_to_october_sitemap": [
+    "https://www.labster.com/simulations/absorption-in-the-small-and-large-intestines-journey-from-the-stomach-to-the-bloodstream-ae287"
+  ],
+  "archived_january_sitemap_intersection": 309,
+  "additional_same_title_public_variants": 1,
+  "independently_discovered_official_detail_urls_including_variant": 312,
+  "alternate_route_evidence_file": "data/labster_catalog_alternate_routes.csv",
+  "current_sitemap_initial_route_prefix_lower_resolution": 312,
+  "current_sitemap_initial_scope_note": "Early read-only reconnaissance counted 313 paths in the simulations prefix including the listing root, suggesting 312 detail-path candidates. It retained the count only. The current XML candidate identities and its exact route-filter count cannot be reconstructed from that reconnaissance log."
+}

@@ -1,0 +1,545 @@
+{
+  "as_of_ist": "2026-11-22",
+  "version": "1.0",
+  "files": [
+    {
+      "path": "data/ap_biology_catalog.csv",
+      "bytes": 152642,
+      "sha256": "c63c8bb9f9e79e30973f2edf60bda1f289b89c9cc5eadacb8bf089e78ab7aad4",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "data/ap_chemistry_catalog.csv",
+      "bytes": 208594,
+      "sha256": "4a82097b6786f2ae71b8884c812bba702519cb6b49ac6d047e0268b9c383b225",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "data/ap_experiment_catalog.csv",
+      "bytes": 588151,
+      "sha256": "c1d8ea7aa3ad39650d88db69a296778bef442f028d32063a5878961f104a1bda",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "data/ap_physics_catalog.csv",
+      "bytes": 228011,
+      "sha256": "25a9a316289d566f024a520e359b5a86da51c8ec019f5a29d7f59665bc4d2523",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "data/apparatus_library.csv",
+      "bytes": 10430,
+      "sha256": "d0466e2543af0d20ed0ea8a4a5959d52018e4c999452ada0ce8f03b69656e5fd",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "data/biology_apparatus.csv",
+      "bytes": 2858,
+      "sha256": "a2677e7925cb29307bdca735983a2591b8002bf737fc16e04cc0c2126945607d",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "data/chemistry_apparatus.csv",
+      "bytes": 3294,
+      "sha256": "227c4514ea04d4ce864141ea81d5c81185f3ceb7fe96949fa1da080db0eba9e9",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "data/cost_scenarios.csv",
+      "bytes": 4199,
+      "sha256": "1cecdf0685e0649ba224c2358bb27ee2ba1a0b5c9edf8c406541cb7c35173011",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "data/cross_lab_reuse_matrix.csv",
+      "bytes": 1319,
+      "sha256": "38945b05b500eddeb26f0f2708131de093def5cac8ca66e0da480fd7ef4d8806",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "data/data_dictionary.md",
+      "bytes": 2442,
+      "sha256": "4b5bd6b1dc6ee4e86bb4ffe6d48d3ab93209839cfb8f02f506e187435c7b671e",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "data/deep_dive_index.csv",
+      "bytes": 4360,
+      "sha256": "dd7dfbcbef164b467ec1b5920e386ac304923e5646ddf9fb26e5908680a4548a",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "data/labster_ap_concept_crosswalk.csv",
+      "bytes": 2994,
+      "sha256": "fd47954dc40916c8be580da8baf4e6149dfc600ee660412d8e093e4d1bced045",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "data/labster_catalog.csv",
+      "bytes": 372342,
+      "sha256": "9affb041d198d92fe0afd4fa9f8603ca2b7fa3bdef5ba446a2710375c4d2e4b1",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "data/labster_catalog.json",
+      "bytes": 837973,
+      "sha256": "066920a0a49e6675f91912a13f9b3581e1b55db49a0b2b4fbe1445533219ec37",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "data/labster_catalog.schema.json",
+      "bytes": 6873,
+      "sha256": "d9ae24e45940dfafb0f2c72c53b1f3cfaf3dfa77ce8162cf0d2f551bd0066f6a",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "data/labster_catalog_alternate_routes.csv",
+      "bytes": 907,
+      "sha256": "62aef3893fcba2aa4927580868785525598125629558ffdd3a5191c70370d704",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "data/labster_catalog_data_dictionary.md",
+      "bytes": 4031,
+      "sha256": "84a130431f5cfc36057006a825745cb9126cb468567639277b33ac7f3db5ccf0",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "data/labster_catalog_documented_examples.csv",
+      "bytes": 8527,
+      "sha256": "4182c69794c49d6186d9786aeac0c60fc3d3fda836c91dd68acac1bcf07e4f69",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "data/labster_catalog_taxonomy.csv",
+      "bytes": 44419,
+      "sha256": "8503ad17e70f49a18dab47e94c094dc0536e92966c73c2d35e55f28bd3bf79b9",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "data/performance_benchmarks.csv",
+      "bytes": 1462,
+      "sha256": "dfdc1d2d733bccdbb807cefc1f354a790b232e937d08ce3a098dd75c8f1aaf6d",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "data/physics_apparatus.csv",
+      "bytes": 3439,
+      "sha256": "67ae8f4fe3ef4b40ead9e0db11a30219aaf5027e793b6bf6ba855a467b26db69",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "data/science_model_registry.csv",
+      "bytes": 1114,
+      "sha256": "dea7ecf0abf9e690bea34b1b6336e13a9caa8dbe20df6c527192ce55ff248f48",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "data/technology_comparison.csv",
+      "bytes": 1560,
+      "sha256": "2299386147182c7dd40944d548ff823077a017b0290278f471d452442ce117c2",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/01_labster_platform_and_sitemap.md",
+      "bytes": 4227,
+      "sha256": "68508c391d1b382fca8a65b5f76afd02f185cc6cdc9f2f6133e867c81dd41883",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/02_full_catalog_analysis.md",
+      "bytes": 13590,
+      "sha256": "bcfc578d00c91c522e74cb3d9157f02fb09145576434a712d874715a43536986",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/03_deep_dive_experiments.md",
+      "bytes": 5297,
+      "sha256": "3ae6624a55079650a75912cc438f2c1477a0df1be386e55f280a395317d07c52",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "docs/04_pedagogy_student_experience.md",
+      "bytes": 4118,
+      "sha256": "6d3be2c94f0fea6f95601ff193f31c7d28f8c6663426d576528bdf78f5c0e100",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/05_teacher_admin_lms_and_assessment.md",
+      "bytes": 2858,
+      "sha256": "adcc254a379a988343a3437be1b0cd54bb61a0ebb82f5b907fc1ed23a06fb02f",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/06_lab_interactions_camera_cursor_ui.md",
+      "bytes": 3679,
+      "sha256": "1683b852987ff633430263251d5308450066387aec2d7320fe0aed64b8515181",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/07_graphics_blender_pbr_animation_audio.md",
+      "bytes": 12431,
+      "sha256": "8a392446a92fe15160d9061f295e6f96358254ce0395cb19f7f43f4ff8c4ad18",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/08_browser_runtime_performance_and_cache.md",
+      "bytes": 4739,
+      "sha256": "e6c612d49e0a9f63ff39a1af5aa0bdf6742335c6a87ad1d99ab8dfec0f45e836",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/09_scientific_engine_ai_and_two_modes.md",
+      "bytes": 9270,
+      "sha256": "001628d56b9d72b1d9af337ac257ec837be36a94c988e837180bd5e6f957d92d",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/10_curriculum_mapping_and_all_three_lab_roadmaps.md",
+      "bytes": 9547,
+      "sha256": "a759c3d81a79a8578295a9c2ade14439fe35b96356e420b95796f70ff10e6b64",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/10a_chemistry_lab_curriculum_and_production.md",
+      "bytes": 7102,
+      "sha256": "c0c9b687a2937f9a35efb33363a2b7fc21c6aed6626370678cf87e218b9badd1",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/10b_physics_lab_curriculum_and_production.md",
+      "bytes": 7802,
+      "sha256": "9aa623c266ebced933f79ec79563f8fd9c6dae54ae12809a5e1c22e054220680",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/10c_biology_lab_curriculum_and_production.md",
+      "bytes": 7658,
+      "sha256": "a6bb7f4d3f4c68cdb00c008bb1b20de265efbfd800693c7e13630455df4867c3",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/11_website_ux_product_requirements.md",
+      "bytes": 4439,
+      "sha256": "59de3d908c23fde133e3e6d894c98aa4bb6740da4f5f3cca9b116038fafed970",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/12_website_backend_data_and_lab_api.md",
+      "bytes": 5082,
+      "sha256": "307393d9a416e356df32cfe19c1e238ff3bd9db5a13b0f98dba62e1a22b13395",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/13_engine_comparison_licensing_decision.md",
+      "bytes": 7033,
+      "sha256": "d307b3045cd7a23449b84271ee87db2b3603014652215d86ce0b6917e6bbfd3f",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/14_government_privacy_accessibility_security.md",
+      "bytes": 10957,
+      "sha256": "9e3daac9fb8f9fc3bd0efa6464917496eca4c838fdda95d38711c0600fc1563a",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/15_infrastructure_scaling_and_cost.md",
+      "bytes": 13620,
+      "sha256": "afb9d0271f83832cc0e841d2328de9c200a1dcb5b207181d9f7cba6acadeb450",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "docs/16_production_roadmap_qa_and_risks.md",
+      "bytes": 4861,
+      "sha256": "cc01a8e6d135ff3e913759d77a871704f79d435ccdc080d7b74732837d9a39e1",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "EVIDENCE/benchmark_logs/protocol.md",
+      "bytes": 654,
+      "sha256": "9442db798e61bf1c54eb61359569bcf096b18d631511819db38b24e4b428ae9d",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "EVIDENCE/public_sources/AP_TEXTBOOK_ACCESS.json",
+      "bytes": 22347,
+      "sha256": "5003cb76b32ecb5fbab1348e5b5c9d822a0d3677c1d9d70cd7ca14f508d8aea1",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "EVIDENCE/public_sources/aws_s3_mumbai_unit_rates.json",
+      "bytes": 1875,
+      "sha256": "60dbf06bffbdc9830085559f663dcbfe5565fd256707bb44bd452da86f8b1693",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "EVIDENCE/public_sources/labster_catalog_coverage.json",
+      "bytes": 2703,
+      "sha256": "72ab00fde845873858ade24ade95ec4efad49a98255c88b456478571800e7964",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "EVIDENCE/screenshots/README.md",
+      "bytes": 434,
+      "sha256": "8ad9cc2c83fef435d671af1757da017e41b99121ad0c51851a7494627fefb4ef",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "EVIDENCE/study_notes/browser_observation.md",
+      "bytes": 1449,
+      "sha256": "9cb46cbb81061eeb6ff5b3c0c41dbdd697a3b3e93de140fddea592902969f566",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "EVIDENCE/study_notes/build_executive_pdf.py",
+      "bytes": 6310,
+      "sha256": "af1c2c00a91e4f9936c786675a2b8e8e07048b5072ce0a3abceff77f12083f56",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "EVIDENCE/study_notes/build_standalone.py",
+      "bytes": 5646,
+      "sha256": "8f330e828351a5b5d4df647cf7d22f181ff89c58a37181f7c1769a886052aa37",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "EVIDENCE/study_notes/cold_read_contract_resolutions.md",
+      "bytes": 1343,
+      "sha256": "060c897465f62f2b9d3eee4843d69611195dbf69c46da143023a202ad1c0b6bd",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "EVIDENCE/study_notes/cold_read_handoff.md",
+      "bytes": 4051,
+      "sha256": "5b049cacabb7ce2171241f483c7447943fafba963858d9103713650866db7730",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "EVIDENCE/study_notes/package_validation.json",
+      "bytes": 466,
+      "sha256": "763ab7cae72106ca591b8e55d6dd0fd3bb4249978285f33a3463a2ec6d10654b",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "EVIDENCE/study_notes/rea_control_evidence.json",
+      "bytes": 7511,
+      "sha256": "98b49e2dd4984f60219543ab19de399fb92ef10d8262717c24308789307a12f3",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "EVIDENCE/study_notes/rea_control_fixture.py",
+      "bytes": 2090,
+      "sha256": "0255721b9bf38f8fbfe8ef0f532976f002e2b7c789b5401924208a2d59eb300a",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "EVIDENCE/study_notes/validate_and_package.py",
+      "bytes": 13749,
+      "sha256": "c3caca5752d43a8f50f2ed6638465ca56a0d41a441ece66f950d62ef2a0736bc",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "EXECUTIVE_DECISIONS.md",
+      "bytes": 2760,
+      "sha256": "e0bc7782cf156d714c1b387055c6157b552fba35eb984ac66087fb1f8e945a46",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "EXECUTIVE_SUMMARY.pdf",
+      "bytes": 6078,
+      "sha256": "df81a69e27f49fe1139dd12a8e33d3f3af8590dd3010d6a140a5909880a5208b",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "HANDOFF.md",
+      "bytes": 988,
+      "sha256": "06b1182410e16d9b96aa4c3b22882099fa399f669d6e3200952d28ca50410065",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "MASTER_BLUEPRINT.md",
+      "bytes": 19463,
+      "sha256": "a190f60dae2cf72852d9913e3d82f664a782cd71e09895a9e995fd589ba6898b",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "MASTER_BLUEPRINT_FULL.md",
+      "bytes": 302018,
+      "sha256": "580e14131ce44fa7d313c1d98392e2ae11ebadfac97f21f6bc12eaadef6bfdfc",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "README_START_HERE.md",
+      "bytes": 928,
+      "sha256": "bf6d3bd20bd2478356fe8dfae9f400760489c59bed8b3fb02c1981c903af59a8",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "RESEARCH_METHOD_AND_COVERAGE.md",
+      "bytes": 5531,
+      "sha256": "5ea0b11b9b17bcfe5abfe7e48b115f43a3289fcb2fc9f1cf2d994c26e03301cb",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "SOURCES_AND_EVIDENCE.csv",
+      "bytes": 140142,
+      "sha256": "78c7728f0bdc68a73fc28f7f8449a04862e73f267ab8156b1c3a6e2ae2c65971",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "SOURCES_AP.csv",
+      "bytes": 9711,
+      "sha256": "16939d681ce0551775cccbd3c34a3d30e2a905801477586cf08a7f6795d9355d",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "SOURCES_LABSTER.csv",
+      "bytes": 111592,
+      "sha256": "7ef63404e228e2b8aa4ab755d93fd478e45338b890ce3ecdfd59c6ec0d79f12a",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "SOURCES_PLATFORM.csv",
+      "bytes": 11746,
+      "sha256": "76db999a974d94f3f180bc690e26ceb783b0b43a83c57b999a85cafce4fa7c04",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "SOURCES_ROOT.csv",
+      "bytes": 8492,
+      "sha256": "a3b60776c0174419b7b03213f35af5596c4bca02022aec779ee7b811bcee7f00",
+      "status": "VERIFIED"
+    },
+    {
+      "path": "specs/acceptance_tests.csv",
+      "bytes": 2363,
+      "sha256": "7570d7d1b76d1252eebe8214112dd00825ecb4a835fd8ed41eae7aacfddcf490",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "specs/activity_2_3_test_cases.csv",
+      "bytes": 654,
+      "sha256": "2851af29411c51f6de701b8de494265acc6056e1aca6d9d9dfb8b6dcc9b4581f",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "specs/biology_science_test_cases.csv",
+      "bytes": 582,
+      "sha256": "1c27e5186d1a61a4faa7a15a0efabfc63ece70759f5711d3da97f5a6753c6f3e",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "specs/database_schema.sql",
+      "bytes": 9366,
+      "sha256": "2a4d7f2d6349d87c3d8adf3d734dc18ee3485597b162a9b3a544762f2f6390d5",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "specs/example_activity_2_3.json",
+      "bytes": 2682,
+      "sha256": "7a0b1ab5cb54d8d19c9873cb6eacac13455e82ef9d9211efff6d3dd2eff621b6",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "specs/example_biology_experiment.json",
+      "bytes": 2754,
+      "sha256": "4a3505a3193c15a9468cd215854d3bc06f2ecc67ecacdaeaf712c73a47147bbc",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "specs/example_physics_experiment.json",
+      "bytes": 2679,
+      "sha256": "72e7054c26a610d7b54f6fd856bb50b855661e99d40aa75e851544562bec5666",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "specs/experiment_definition.schema.json",
+      "bytes": 4394,
+      "sha256": "bb015ab9e282652bb04b7719aee3bae97f7f6a9ae83e941324b34aa00e3fa75b",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "specs/implementation_backlog.csv",
+      "bytes": 2455,
+      "sha256": "0a82216cbe8e402067741051ce25731d2b9e73b402726c3bb4032859fc44ec38",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "specs/lab_action.schema.json",
+      "bytes": 5902,
+      "sha256": "5bc3f794d8d040d199dc26ee73ae92384f929a2697cb34789fc84341bfdcb05a",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "specs/launch_and_event.schema.json",
+      "bytes": 2345,
+      "sha256": "f90ad0bc640f583c04f408043e6e115357e6187b6abb9da213393dff1e5251f5",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "specs/physics_science_test_cases.csv",
+      "bytes": 586,
+      "sha256": "343b16ec432c4cf545fbcab3f89c7c0fd00cb2fab6a814267533ba50c1b73e49",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "specs/runtime_examples.json",
+      "bytes": 2868,
+      "sha256": "4938adb744f066e71794c58dfa3707dd94ea0f0229a75bcd51d21f2ab7b772a6",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "specs/science_model_contract.schema.json",
+      "bytes": 2228,
+      "sha256": "e0f405000f8e57e95e2cbe34704188a72545621911547aa7169bc67028728334",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "specs/science_models.json",
+      "bytes": 2477,
+      "sha256": "43a0dbf2fcd26f57aa7627f4658d02d61ef2db94518e2830cc78f1a08ccc0219",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "specs/screen_inventory.csv",
+      "bytes": 1462,
+      "sha256": "9a5b27277892a023077f06be69337a514ea68c887329d1853a63a1cd071f0311",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "specs/site_map.md",
+      "bytes": 831,
+      "sha256": "442e1d5c716fdea8e61c7ac985fe7e86e5b5833dc7510ad7da03de98d1e0ff3f",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "specs/website_lab_api.openapi.yaml",
+      "bytes": 19820,
+      "sha256": "358851801c15c91afc4db3ee031a706d4c79dd606b04123db740ed4ba717abc7",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "TRACEABILITY_MATRIX.csv",
+      "bytes": 1923,
+      "sha256": "4775dec3f9507b2be0ea881bcc0ea09b0b944d35188a1173a0bd6b8fa6fb6fc0",
+      "status": "PROPOSED"
+    },
+    {
+      "path": "VALIDATION_REPORT.md",
+      "bytes": 5309,
+      "sha256": "0c646faa376fd7c30df2759473166e1c1f07876366157a13e24dcdc9acd37cd0",
+      "status": "VERIFIED"
+    }
+  ],
+  "integrity_metadata": {
+    "MANIFEST.json": "Listed and hashed in SHA256SUMS.txt",
+    "SHA256SUMS.txt": "Has no self-hash; ZIP checksum delivered separately"
+  },
+  "status_meanings": {
+    "VERIFIED": "Artifact independently parsed, observed or reconciled within the validation scope",
+    "PROPOSED": "Design, planning candidate or mixed analysis; see row and chapter qualifications",
+    "UNVERIFIED": "Not established",
+    "BLOCKED": "External prerequisite required",
+    "NOT_APPLICABLE": "Out of scope"
+  }
+}

@@ -1,0 +1,8 @@
+"model_id","version","subject","implementation","calibration_status","qualification","source_ids","validation_case_ids","dataset_id"
+"CHEM-ZN-ACID-BOUND","0.1.0","chemistry","mass_ledger","theoretical_only","proposed","AP-REF-10-PS","CHEM-T01|CHEM-T02|CHEM-T03","unknown"
+"PHYS-SLAB-RAY","0.1.0","physics","analytic","theoretical_only","proposed","AP-REF-10-PS|R-SNELL","PHYS-T01|PHYS-T02|PHYS-T03","unknown"
+"BIO-ONION-STACK","0.1.0","biology","recorded_dataset","unavailable","blocked","AP-REF-09-1|R-MICRO|R-BIA","BIO-T01|BIO-T02|BIO-T03","unknown"
+"CHEM-AQUEOUS-SPECIATION","TBD","chemistry","PHREEQC candidate","unavailable","not_admitted","R-PHREEQC","future_controls","unknown"
+"CHEM-MECH-THERMO","TBD","chemistry","Cantera candidate","unavailable","not_admitted","R-CANT","mechanism specific","unknown"
+"PHYS-DC-NETWORK","TBD","physics","analytical circuit graph candidate","pending","not_admitted","AP-REF-10-PS","KCL/KVL, instrument reserve","unknown"
+"BIO-PLANT-EMPIRICAL","TBD","biology","measured response dataset candidate","unavailable","not_admitted","R-BIA","field/slide-group holdout","unknown"

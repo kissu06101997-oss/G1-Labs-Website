@@ -1,0 +1,102 @@
+{
+  "launchRequest": {
+    "experimentId": "AP-PHYS-10-9.10",
+    "labId": "physics",
+    "mode": "experiment",
+    "manifestSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "locale": "te-IN",
+    "engineAbi": "lab@1",
+    "assignmentId": null,
+    "contentVersion": "0.1.0-research"
+  },
+  "launchResponse": {
+    "experimentId": "AP-PHYS-10-9.10",
+    "labId": "physics",
+    "mode": "experiment",
+    "manifestSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "locale": "te-IN",
+    "engineAbi": "lab@1",
+    "launchToken": "RESEARCH_FIXTURE_DO_NOT_REDEEM_12345",
+    "studentPseudonym": "84ac5fb7-d0f3-4c62-807a-fe4b07a5feb9",
+    "attemptId": "66dfa156-986a-48c7-b520-44f3732c9d96",
+    "expiresAt": "2026-11-22T08:03:00Z"
+  },
+  "labActionRequest": {
+    "experimentId": "AP-PHYS-10-9.10",
+    "labId": "physics",
+    "mode": "experiment",
+    "sessionId": "5c55a6fc-533f-44bf-b08b-ed61c639f0b0",
+    "actorId": "6eecb0b3-d889-4256-8f68-89d1df20b368",
+    "targetObjectId": "phys.glass-slab:1",
+    "actionType": "select_incident_ray",
+    "parametersWithUnits": {
+      "angle": {
+        "value": 45,
+        "unit": "deg"
+      }
+    },
+    "expectedRevision": 4
+  },
+  "labActionConflict": {
+    "scientificStateDelta": [],
+    "objectStateDelta": [],
+    "observations": [],
+    "visualCueIds": [],
+    "audioCueIds": [],
+    "assessmentEvents": [],
+    "accepted": false,
+    "reasonCode": "REVISION_CONFLICT",
+    "committedRevision": 5,
+    "modelProvenance": null,
+    "uncertainty": {
+      "kind": "not_applicable",
+      "lower": null,
+      "upper": null,
+      "note": "Retrieve confirmed checkpoint 5."
+    }
+  },
+  "labActionResult": {
+    "scientificStateDelta": [],
+    "objectStateDelta": [
+      {
+        "path": "/optics/incidentAngleDeg",
+        "operation": "set",
+        "value": 45
+      }
+    ],
+    "observations": [],
+    "visualCueIds": [
+      "ray-overlay-update"
+    ],
+    "audioCueIds": [],
+    "assessmentEvents": [],
+    "accepted": true,
+    "reasonCode": "OK",
+    "committedRevision": 5,
+    "modelProvenance": {
+      "modelId": "PHYS-SLAB-RAY",
+      "modelVersion": "0.1.0",
+      "qualification": "theoretical",
+      "sourceIds": [
+        "R-SNELL"
+      ]
+    },
+    "uncertainty": {
+      "kind": "unknown",
+      "lower": null,
+      "upper": null,
+      "note": "Device calibration pending; this fixture confirms a setting only."
+    }
+  },
+  "learningEvent": {
+    "eventId": "368af0ae-ae9a-45e6-b79c-836cbac02178",
+    "sessionId": "5c55a6fc-533f-44bf-b08b-ed61c639f0b0",
+    "attemptId": "66dfa156-986a-48c7-b520-44f3732c9d96",
+    "type": "checkpoint.committed",
+    "occurredAt": "2026-11-22T08:00:00Z",
+    "revision": 5,
+    "idempotencyKey": "research-only-fixture-04",
+    "evidenceIds": [],
+    "retentionClass": "attempt_record"
+  }
+}

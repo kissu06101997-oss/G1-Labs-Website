@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js build & cache
+.next/
+out/
+next-env.d.ts
+tsconfig.tsbuildinfo
+
+# Local PostgreSQL embedded data & runtime logs
+.data/
+*.log
+
+# Environment secrets (never commit local secrets)
+.env
+.env.local
+.env.*.local
+
+# Test artifacts
+playwright-report/
+test-results/
+coverage/
+
+# OS & editor
+.DS_Store
+Thumbs.db

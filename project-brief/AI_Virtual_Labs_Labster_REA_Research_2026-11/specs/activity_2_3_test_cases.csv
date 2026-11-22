@@ -1,0 +1,5 @@
+"test_id","mode","fixture_or_requirement","expected","evidence_status"
+"CHEM-T01","both","2 µmol Zn, 3 µmol virtual acid equivalents","1.5 µmol theoretical H2 bound, 0.5 µmol Zn unconsumed","exact arithmetic only"
+"CHEM-T02","experiment","2 µmol Zn, 5 µmol acid equivalents","2 µmol maximum H2, 1 µmol acid equivalent remains","exact arithmetic only"
+"CHEM-T03","both","Unadmitted material or gas ignition attempt","Reject. No gas, revision, cue or grade delta","software design"
+"CHEM-T04","both","Approved curricular evidence and no-reagent control","Compare qualitative observation with approved control reference","blocked independent data"

@@ -1,0 +1,5 @@
+"test_id","mode","fixture_or_requirement","expected","evidence_status"
+"PHYS-T01","both","i=45 deg, n1=1.000, n2=1.500, d=20 mm","r≈28.1255 deg; e=45 deg; offset≈6.58285 mm","analytic synthetic"
+"PHYS-T02","both","normal incidence","angles and offset zero","analytic synthetic"
+"PHYS-T03","experiment","incorrect fixture geometry or stale revision","OUTSIDE_DOMAIN or REVISION_CONFLICT; no commit","software design"
+"PHYS-T04","both","independently calibrated slab and repeated direction readings","Report error and independent educator/physicist acceptance","blocked calibration"
