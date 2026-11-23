@@ -2,26 +2,44 @@
 node_modules/
 .pnpm-store/
 
-# Next.js build & cache
+# Next.js, build outputs & caches
 .next/
 out/
+dist/
+build/
+.turbo/
+.cache/
 next-env.d.ts
 tsconfig.tsbuildinfo
 
-# Local PostgreSQL embedded data & runtime logs
+# Local embedded database, private databases & runtime logs
 .data/
+*.db
+*.sqlite
+*.sqlite3
 *.log
+tmp/
 
-# Environment secrets (never commit local secrets)
+# Environment secrets & credentials (keep .env.example only)
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*service-account*.json
+*credentials*.json
 
-# Test artifacts
+# Test artifacts & reports
 playwright-report/
 test-results/
 coverage/
 
-# OS & editor
+# Temporary local export archives
+*.zip
+
+# OS & editor files
 .DS_Store
 Thumbs.db
