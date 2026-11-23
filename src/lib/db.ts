@@ -1,31 +1,107 @@
-import { Pool, PoolClient, QueryResult, QueryResultRow } from "pg";
+import { Pool, PoolClient, PoolConfig, QueryResult, QueryResultRow } from "pg";
 
 declare global {
   var __g1PgPool: Pool | undefined;
 }
 
-function getDatabaseUrl(): string {
+const LOCAL_PGLITE_FALLBACK_URL =
+  "postgres://postgres:postgres@127.0.0.1:54329/g1_virtua_labs";
+
+export interface ResolvedDatabaseConfig {
+  connectionString: string;
+  isLocalHost: boolean;
+  isLocalPglite: boolean;
+  useSsl: boolean;
+  max: number;
+  idleTimeoutMillis: number;
+  connectionTimeoutMillis: number;
+  allowExitOnIdle: boolean;
+}
+
+function isLocalHostname(hostname: string): boolean {
+  const normalized = hostname.toLowerCase();
   return (
-    process.env.DATABASE_URL ||
-    "postgres://postgres:postgres@127.0.0.1:54329/g1_virtua_labs"
+    normalized === "127.0.0.1" ||
+    normalized === "localhost" ||
+    normalized === "::1" ||
+    normalized === "[::1]"
   );
+}
+
+export function resolveDatabaseConfig(
+  env: NodeJS.ProcessEnv = process.env
+): ResolvedDatabaseConfig {
+  const isVercel = env.VERCEL === "1" || env.VERCEL === "true";
+  const isProduction = env.NODE_ENV === "production" || isVercel;
+
+  const configuredUrl =
+    env.DATABASE_URL?.trim() ||
+    env.POSTGRES_URL?.trim() ||
+    env.POSTGRES_PRISMA_URL?.trim() ||
+    env.DATABASE_URL_UNPOOLED?.trim() ||
+    env.POSTGRES_URL_NON_POOLING?.trim() ||
+    "";
+
+  if (!configuredUrl) {
+    if (isProduction) {
+      throw new Error(
+        "[g1-pg] Database configuration missing: set DATABASE_URL (or POSTGRES_URL) in server environment variables. Refusing to fall back to localhost in production."
+      );
+    }
+  }
+
+  const connectionString = configuredUrl || LOCAL_PGLITE_FALLBACK_URL;
+
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(connectionString);
+  } catch {
+    throw new Error(
+      "[g1-pg] Invalid database connection string format in DATABASE_URL / POSTGRES_URL."
+    );
+  }
+
+  const isLocalHost = isLocalHostname(parsedUrl.hostname);
+
+  if (isVercel && isLocalHost) {
+    throw new Error(
+      "[g1-pg] Invalid Vercel database configuration: connection string points to localhost, which is unreachable from Vercel serverless functions."
+    );
+  }
+
+  const isLocalPglite = isLocalHost && parsedUrl.port === "54329";
+  const sslMode = parsedUrl.searchParams.get("sslmode")?.toLowerCase();
+  const useSsl = !isLocalHost && sslMode !== "disable";
+
+  const envMax = env.PG_POOL_MAX ? Number(env.PG_POOL_MAX) : NaN;
+  const defaultMax = isLocalPglite ? 1 : isVercel ? 5 : 10;
+  const max = Number.isInteger(envMax) && envMax > 0 ? envMax : defaultMax;
+
+  return {
+    connectionString,
+    isLocalHost,
+    isLocalPglite,
+    useSsl,
+    max,
+    idleTimeoutMillis: isLocalPglite ? 250 : isVercel ? 10_000 : 30_000,
+    connectionTimeoutMillis: 15_000,
+    allowExitOnIdle: isVercel,
+  };
 }
 
 export function getPool(): Pool {
   if (!globalThis.__g1PgPool) {
-    const url = getDatabaseUrl();
-    const isLocalPglite =
-      url.includes("127.0.0.1:54329") || url.includes("localhost:54329");
-    const maxConnections = Number(
-      process.env.PG_POOL_MAX || (isLocalPglite ? 1 : 10)
-    );
+    const cfg = resolveDatabaseConfig(process.env);
+    const poolConfig: PoolConfig = {
+      connectionString: cfg.connectionString,
+      max: cfg.max,
+      idleTimeoutMillis: cfg.idleTimeoutMillis,
+      connectionTimeoutMillis: cfg.connectionTimeoutMillis,
+      allowExitOnIdle: cfg.allowExitOnIdle,
+      ...(cfg.useSsl ? { ssl: { rejectUnauthorized: false } } : {}),
+    };
 
-    globalThis.__g1PgPool = new Pool({
-      connectionString: url,
-      max: maxConnections,
-      idleTimeoutMillis: isLocalPglite ? 250 : 30_000,
-      connectionTimeoutMillis: 15_000,
-    });
+    globalThis.__g1PgPool = new Pool(poolConfig);
 
     globalThis.__g1PgPool.on("error", (err) => {
       console.error("[g1-pg] Unexpected idle pool error:", err.message);

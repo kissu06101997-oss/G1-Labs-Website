@@ -198,7 +198,10 @@ export function attachSessionCookies(
   locale: Locale,
   expiresAt: Date
 ): void {
-  const isSecure = process.env.APP_ORIGIN?.startsWith("https://") ?? false;
+  const isSecure =
+    process.env.VERCEL === "1" ||
+    process.env.VERCEL === "true" ||
+    (process.env.APP_ORIGIN?.startsWith("https://") ?? false);
   response.cookies.set(SESSION_COOKIE_NAME, rawToken, {
     httpOnly: true,
     sameSite: "lax",
@@ -223,15 +226,21 @@ export function attachSessionCookies(
 }
 
 export function clearSessionCookies(response: NextResponse): void {
+  const isSecure =
+    process.env.VERCEL === "1" ||
+    process.env.VERCEL === "true" ||
+    (process.env.APP_ORIGIN?.startsWith("https://") ?? false);
   response.cookies.set(SESSION_COOKIE_NAME, "", {
     httpOnly: true,
     sameSite: "lax",
+    secure: isSecure,
     path: "/",
     maxAge: 0,
   });
   response.cookies.set(CSRF_COOKIE_NAME, "", {
     httpOnly: false,
     sameSite: "lax",
+    secure: isSecure,
     path: "/",
     maxAge: 0,
   });

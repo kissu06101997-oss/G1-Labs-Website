@@ -7,6 +7,7 @@
     "db:start": "node scripts/db-server.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:seed": "node scripts/db-seed.mjs",
+    "db:seed:catalog": "node scripts/db-seed-catalog.mjs",
     "db:reset": "node scripts/db-reset.mjs",
     "dev": "next dev --hostname 127.0.0.1 --port 3000",
     "dev:local": "node scripts/run-local.mjs dev",

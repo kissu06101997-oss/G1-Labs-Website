@@ -32,6 +32,9 @@ tmp/
 *service-account*.json
 *credentials*.json
 
+# Vercel CLI local project link
+.vercel/
+
 # Test artifacts & reports
 playwright-report/
 test-results/

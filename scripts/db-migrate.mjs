@@ -21,11 +21,42 @@ function loadEnvLocal() {
 
 loadEnvLocal();
 
-const databaseUrl =
-  process.env.DATABASE_URL || "postgres://postgres:postgres@127.0.0.1:54329/g1_virtua_labs";
+function getClientConfig() {
+  const isProduction =
+    process.env.NODE_ENV === "production" ||
+    process.env.VERCEL === "1" ||
+    process.env.VERCEL === "true";
+
+  // Prefer direct/unpooled connection string for DDL migrations when provided by Neon/Vercel
+  const configuredUrl =
+    process.env.DATABASE_URL_UNPOOLED?.trim() ||
+    process.env.POSTGRES_URL_NON_POOLING?.trim() ||
+    process.env.DATABASE_URL?.trim() ||
+    process.env.POSTGRES_URL?.trim() ||
+    "";
+
+  if (!configuredUrl && isProduction) {
+    throw new Error(
+      "[db:migrate] Missing DATABASE_URL / DATABASE_URL_UNPOOLED / POSTGRES_URL in production environment."
+    );
+  }
+
+  const connectionString =
+    configuredUrl || "postgres://postgres:postgres@127.0.0.1:54329/g1_virtua_labs";
+  const parsed = new URL(connectionString);
+  const host = parsed.hostname.toLowerCase();
+  const isLocal = host === "127.0.0.1" || host === "localhost" || host === "::1";
+  const sslMode = parsed.searchParams.get("sslmode")?.toLowerCase();
+  const useSsl = !isLocal && sslMode !== "disable";
+
+  return {
+    connectionString,
+    ...(useSsl ? { ssl: { rejectUnauthorized: false } } : {}),
+  };
+}
 
 async function run() {
-  const client = new Client({ connectionString: databaseUrl });
+  const client = new Client(getClientConfig());
   await client.connect();
   try {
     const migrationsDir = path.resolve(process.cwd(), "db/migrations");

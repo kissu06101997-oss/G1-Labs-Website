@@ -87,7 +87,7 @@ export const SEED_IDS = {
   seedSessionA2: "80000002-0000-4000-8000-000000000002",
 };
 
-function buildExperimentDefinitions() {
+export function buildExperimentDefinitions() {
   const specsDir = path.resolve(
     process.cwd(),
     "project-brief/AI_Virtual_Labs_Labster_REA_Research_2026-11/specs"
