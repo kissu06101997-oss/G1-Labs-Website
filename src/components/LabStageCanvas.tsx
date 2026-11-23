@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Accessibility, CheckCircle2, Eye, ListChecks, RotateCcw, ShieldAlert } from "lucide-react";
+import {
+  Accessibility,
+  CheckCircle2,
+  Eye,
+  ListChecks,
+  MousePointerClick,
+  RotateCcw,
+  ShieldAlert,
+} from "lucide-react";
 import type { LabSessionState } from "@/lib/science-adapters";
 import { getDictionary, getExperimentCopy } from "@/lib/i18n";
 import type { ExperimentDefinition, LabMode, Locale, Quantity } from "@/lib/types";
@@ -19,6 +27,9 @@ interface LabStageCanvasProps {
   mode: LabMode;
   locale: Locale;
   state: LabSessionState;
+  revision: number;
+  isOffline?: boolean;
+  hasUnsavedIntent?: boolean;
   disabled: boolean;
   onDispatch: (args: DispatchActionArgs) => Promise<void>;
 }
@@ -28,10 +39,14 @@ export function LabStageCanvas({
   mode,
   locale,
   state,
+  revision,
+  isOffline = false,
+  hasUnsavedIntent = false,
   disabled,
   onDispatch,
 }: LabStageCanvasProps) {
   const dict = getDictionary(locale);
+  const isTe = locale === "te-IN";
   const copy = getExperimentCopy(definition.experimentId, locale);
   const [showEquipmentDrawer, setShowEquipmentDrawer] = useState(false);
   const [domAccessibleMode, setDomAccessibleMode] = useState(false);
@@ -39,9 +54,10 @@ export function LabStageCanvas({
 
   const subject = definition.subject;
 
-  // Discrete keyboard/screen-reader actions that call the EXACT same API action executor as pointer hotspots
+  // Discrete keyboard/screen-reader & pointer hotspot actions that call the EXACT same API action executor
   const equipmentActions: Array<{
     id: string;
+    shortHotspotLabel: string;
     label: string;
     detail: string;
     dangerGuard?: boolean;
@@ -51,8 +67,15 @@ export function LabStageCanvas({
       ? [
           {
             id: "connect-soap",
-            label: "Connect delivery tube → soap-solution receiver (port_soap_receiver)",
-            detail: "Valid Activity 2.3 apparatus setup",
+            shortHotspotLabel: isTe
+              ? "1. డెలివరీ ట్యూబ్ → సబ్బు ద్రావణం కలపండి"
+              : "1. Connect delivery tube → soap receiver",
+            label: isTe
+              ? "డెలివరీ ట్యూబ్‌ను సబ్బు-ద్రావణ గ్రాహకానికి కలపండి (port_soap_receiver)"
+              : "Connect delivery tube → soap-solution receiver (port_soap_receiver)",
+            detail: isTe
+              ? "చెల్లుబాటు అయ్యే కృత్యం 2.3 పరికరాల అమరిక"
+              : "Valid Activity 2.3 apparatus setup",
             args: {
               targetObjectId: "chem.transfer:1",
               actionType: "setup_apparatus",
@@ -61,8 +84,13 @@ export function LabStageCanvas({
           },
           {
             id: "identify-zn",
-            label: "Verify reactant: Zinc granules (Zn)",
-            detail: "Admitted Activity 2.3 solid metal",
+            shortHotspotLabel: isTe
+              ? "2. జింక్ కణికలు (Zn) ధృవీకరించండి"
+              : "2. Verify Zinc granules (Zn)",
+            label: isTe
+              ? "క్రియాజనకాన్ని ధృవీకరించండి: జింక్ కణికలు (Zn)"
+              : "Verify reactant: Zinc granules (Zn)",
+            detail: isTe ? "ఆమోదించబడిన ఘన లోహం" : "Admitted Activity 2.3 solid metal",
             args: {
               targetObjectId: "chem.reaction-tube:1",
               actionType: "identify_reagent",
@@ -71,8 +99,13 @@ export function LabStageCanvas({
           },
           {
             id: "identify-h2so4",
-            label: "Verify reactant: Dilute sulfuric acid (dilute_H2SO4)",
-            detail: "Admitted Activity 2.3 acid reagent",
+            shortHotspotLabel: isTe
+              ? "3. సజల H₂SO₄ ధృవీకరించండి"
+              : "3. Verify dilute H₂SO₄",
+            label: isTe
+              ? "క్రియాజనకాన్ని ధృవీకరించండి: సజల సల్ఫ్యూరిక్ ఆమ్లం (dilute_H2SO4)"
+              : "Verify reactant: Dilute sulfuric acid (dilute_H2SO4)",
+            detail: isTe ? "ఆమోదించబడిన ఆమ్ల కారకం" : "Admitted Activity 2.3 acid reagent",
             args: {
               targetObjectId: "chem.reaction-tube:1",
               actionType: "identify_reagent",
@@ -81,8 +114,15 @@ export function LabStageCanvas({
           },
           {
             id: "run-default-bound",
-            label: "Run bounded stoichiometry fixture (2.0 µmol Zn + 3.0 µmol H⁺ eq)",
-            detail: "Computes theoretical upper bound 1.5 µmol H₂",
+            shortHotspotLabel: isTe
+              ? "4. స్టోయికియోమెట్రీ గణన అమలు చేయండి"
+              : "4. Run bounded stoichiometry check",
+            label: isTe
+              ? "పరిమిత స్టోయికియోమెట్రీ గణన (2.0 µmol Zn + 3.0 µmol H⁺ eq)"
+              : "Run bounded stoichiometry fixture (2.0 µmol Zn + 3.0 µmol H⁺ eq)",
+            detail: isTe
+              ? "సైద్ధాంతిక గరిష్ట పరిమితి 1.5 µmol H₂ ను గణిస్తుంది"
+              : "Computes theoretical upper bound 1.5 µmol H₂",
             args: {
               targetObjectId: "chem.reaction-tube:1",
               actionType: "propose_virtual_amount",
@@ -94,8 +134,15 @@ export function LabStageCanvas({
           },
           {
             id: "guard-bad-port",
-            label: "Test safety guard: Connect tube to open air (expect 422 BAD_PORT)",
-            detail: "Verifies invalid port is rejected without changing revision",
+            shortHotspotLabel: isTe
+              ? "భద్రతా తనిఖీ: బహిరంగ గాలికి కలపండి (422)"
+              : "Safety check: Open air port (422)",
+            label: isTe
+              ? "భద్రతా తనిఖీ: ట్యూబ్‌ను బహిరంగ గాలికి కలపండి (422 BAD_PORT అంచనా)"
+              : "Test safety guard: Connect tube to open air (expect 422 BAD_PORT)",
+            detail: isTe
+              ? "రివిజన్ మారకుండా చెల్లని పోర్ట్ తిరస్కరించబడుతుందని నిర్ధారిస్తుంది"
+              : "Verifies invalid port is rejected without changing revision",
             dangerGuard: true,
             args: {
               targetObjectId: "chem.transfer:1",
@@ -105,8 +152,15 @@ export function LabStageCanvas({
           },
           {
             id: "guard-bad-reagent",
-            label: "Test safety guard: Substitute HCl (expect 422 INCOMPATIBLE_MATERIAL)",
-            detail: "Verifies unsupported acids are blocked with zero mutation",
+            shortHotspotLabel: isTe
+              ? "భద్రతా తనిఖీ: HCl ప్రత్యామ్నాయం (422)"
+              : "Safety check: Substitute HCl (422)",
+            label: isTe
+              ? "భద్రతా తనిఖీ: HCl ను ప్రత్యామ్నాయం చేయండి (422 INCOMPATIBLE_MATERIAL అంచనా)"
+              : "Test safety guard: Substitute HCl (expect 422 INCOMPATIBLE_MATERIAL)",
+            detail: isTe
+              ? "మద్దతు లేని ఆమ్లాలు సున్నా మార్పుతో నిరోధించబడతాయని నిర్ధారిస్తుంది"
+              : "Verifies unsupported acids are blocked with zero mutation",
             dangerGuard: true,
             args: {
               targetObjectId: "chem.reaction-tube:1",
@@ -119,8 +173,15 @@ export function LabStageCanvas({
         ? [
             {
               id: "mount-slab",
-              label: "Mount parallel glass slab aligned to normal (port_parallel_normal)",
-              detail: "Valid Activity 9.10 optical alignment",
+              shortHotspotLabel: isTe
+                ? "1. సమాంతర గాజు దిమ్మెను అమర్చండి"
+                : "1. Mount parallel glass slab",
+              label: isTe
+                ? "సమాంతర గాజు దిమ్మెను లంబానికి అనుగుణంగా అమర్చండి (port_parallel_normal)"
+                : "Mount parallel glass slab aligned to normal (port_parallel_normal)",
+              detail: isTe
+                ? "చెల్లుబాటు అయ్యే కృత్యం 9.10 దృశా అమరిక"
+                : "Valid Activity 9.10 optical alignment",
               args: {
                 targetObjectId: "phys.glass-slab:1",
                 actionType: "place_optic",
@@ -129,8 +190,15 @@ export function LabStageCanvas({
             },
             {
               id: "trace-45",
-              label: "Trace incident ray at 45° through 20 mm slab",
-              detail: "Theoretical Snell trace (r = 28.13°, offset = 6.58 mm)",
+              shortHotspotLabel: isTe
+                ? "2. 45° పతన కిరణాన్ని గుర్తించండి"
+                : "2. Trace 45° incident ray",
+              label: isTe
+                ? "20 mm గాజు దిమ్మె ద్వారా 45° వద్ద పతన కిరణాన్ని గుర్తించండి"
+                : "Trace incident ray at 45° through 20 mm slab",
+              detail: isTe
+                ? "సైద్ధాంతిక స్నెల్ గణన (r = 28.13°, పార్శ్వ విస్థాపనం = 6.58 mm)"
+                : "Theoretical Snell trace (r = 28.13°, offset = 6.58 mm)",
               args: {
                 targetObjectId: "phys.glass-slab:1",
                 actionType: "select_incident_ray",
@@ -142,8 +210,13 @@ export function LabStageCanvas({
             },
             {
               id: "trace-30",
-              label: "Trace comparison ray at 30° through 20 mm slab",
-              detail: "Comparison angle within 0–60° domain",
+              shortHotspotLabel: isTe
+                ? "3. 30° పోలిక కిరణాన్ని గుర్తించండి"
+                : "3. Trace 30° comparison ray",
+              label: isTe
+                ? "20 mm గాజు దిమ్మె ద్వారా 30° వద్ద పోలిక కిరణాన్ని గుర్తించండి"
+                : "Trace comparison ray at 30° through 20 mm slab",
+              detail: isTe ? "0–60° పరిధిలో పోలిక కోణం" : "Comparison angle within 0–60° domain",
               args: {
                 targetObjectId: "phys.glass-slab:1",
                 actionType: "select_incident_ray",
@@ -155,8 +228,15 @@ export function LabStageCanvas({
             },
             {
               id: "guard-angle-oob",
-              label: "Test domain guard: Incident angle 75° (expect 422 OUTSIDE_DOMAIN)",
-              detail: "Verifies out-of-range angle is rejected without mutation",
+              shortHotspotLabel: isTe
+                ? "పరిధి తనిఖీ: 75° కోణం (422)"
+                : "Domain check: 75° angle (422)",
+              label: isTe
+                ? "పరిధి తనిఖీ: పతన కోణం 75° (422 OUTSIDE_DOMAIN అంచనా)"
+                : "Test domain guard: Incident angle 75° (expect 422 OUTSIDE_DOMAIN)",
+              detail: isTe
+                ? "పరిధి వెలుపలి కోణం తిరస్కరించబడుతుందని నిర్ధారిస్తుంది"
+                : "Verifies out-of-range angle is rejected without mutation",
               dangerGuard: true,
               args: {
                 targetObjectId: "phys.glass-slab:1",
@@ -171,8 +251,13 @@ export function LabStageCanvas({
         : [
             {
               id: "select-field-1",
-              label: "Load prepared onion epidermis slide — Field 1",
-              detail: "Discrete acquired fixture field (qualitative view)",
+              shortHotspotLabel: isTe
+                ? "1. ఉల్లిపొర స్లైడ్ ఫీల్డ్ 1 లోడ్ చేయండి"
+                : "1. Load onion slide Field 1",
+              label: isTe
+                ? "సిద్ధం చేసిన ఉల్లిపొర స్లైడ్‌ను లోడ్ చేయండి — ఫీల్డ్ 1"
+                : "Load prepared onion epidermis slide — Field 1",
+              detail: isTe ? "గుణాత్మక పరిశీలన వీక్షణ" : "Discrete acquired fixture field (qualitative view)",
               args: {
                 targetObjectId: "bio.prepared-onion-slide:1",
                 actionType: "select_field",
@@ -181,8 +266,13 @@ export function LabStageCanvas({
             },
             {
               id: "select-plane-1",
-              label: "Focus microscope to acquired plane 1",
-              detail: "Discrete focus index within 0–2 stack",
+              shortHotspotLabel: isTe
+                ? "2. మైక్రోస్కోప్ ఫోకస్ ప్లేన్ 1"
+                : "2. Focus microscope Plane 1",
+              label: isTe
+                ? "మైక్రోస్కోప్‌ను ప్లేన్ 1 కు ఫోకస్ చేయండి"
+                : "Focus microscope to acquired plane 1",
+              detail: isTe ? "0–2 స్టాక్‌లో ఫోకస్ సూచిక" : "Discrete focus index within 0–2 stack",
               args: {
                 targetObjectId: "bio.compound-microscope:1",
                 actionType: "select_acquired_plane",
@@ -191,8 +281,15 @@ export function LabStageCanvas({
             },
             {
               id: "mark-cell-wall",
-              label: "Annotate visible plant cell wall boundary",
-              detail: "Records confirmed qualitative morphology observation",
+              shortHotspotLabel: isTe
+                ? "3. కణ కవచ సరిహద్దును గుర్తించండి"
+                : "3. Mark plant cell wall boundary",
+              label: isTe
+                ? "కనిపించే వృక్ష కణ కవచ సరిహద్దును గుర్తించండి"
+                : "Annotate visible plant cell wall boundary",
+              detail: isTe
+                ? "నిర్ధారించిన గుణాత్మక నిర్మాణ పరిశీలనను నమోదు చేస్తుంది"
+                : "Records confirmed qualitative morphology observation",
               args: {
                 targetObjectId: "bio.image-view:1",
                 actionType: "mark_visible_boundary",
@@ -201,8 +298,15 @@ export function LabStageCanvas({
             },
             {
               id: "guard-uncalibrated",
-              label: "Test calibration guard: Measure µm length (expect 422 CALIBRATION_MISSING)",
-              detail: "Verifies quantitative length is blocked pending calibrated micrographs",
+              shortHotspotLabel: isTe
+                ? "కాలిబ్రేషన్ తనిఖీ: µm కొలత (422)"
+                : "Calibration check: µm length (422)",
+              label: isTe
+                ? "కాలిబ్రేషన్ తనిఖీ: µm పొడవు కొలవండి (422 CALIBRATION_MISSING అంచనా)"
+                : "Test calibration guard: Measure µm length (expect 422 CALIBRATION_MISSING)",
+              detail: isTe
+                ? "కాలిబ్రేట్ చేసిన మైక్రోగ్రాఫ్‌లు లేకుండా పరిమాణాత్మక కొలత నిరోధించబడుతుంది"
+                : "Verifies quantitative length is blocked pending calibrated micrographs",
               dangerGuard: true,
               args: {
                 targetObjectId: "bio.scale-overlay:1",
@@ -213,12 +317,27 @@ export function LabStageCanvas({
           ];
 
   return (
-    <div className="g1-card flex h-full flex-col p-2.5">
-      <div className="relative flex min-h-[380px] flex-1 flex-col overflow-hidden rounded-[18px] bg-[#e8f7fc] p-4 sm:min-h-[470px]">
-        {/* Top stage badges */}
+    <div
+      className="g1-card flex h-full flex-col p-3"
+      style={{
+        background: "linear-gradient(180deg, #e3f6fb 0%, #f3fbff 100%)",
+        borderColor: "#bfe0eb",
+      }}
+    >
+      <div
+        className="relative flex min-h-[410px] flex-1 flex-col overflow-hidden rounded-[18px] p-4 sm:min-h-[505px]"
+        style={{
+          background:
+            "radial-gradient(ellipse at 70% 25%, #f5fdff 0%, #d3edf5 65%, #b6d9e7 100%)",
+        }}
+      >
+        {/* Top stage badges matching 03_Simulation_Player_Premium.png */}
         <div className="relative z-10 flex flex-wrap items-center justify-between gap-2">
-          <span className="g1-tag bg-white/95 text-[#23435e]">
-            {domAccessibleMode ? dict.player.accessibleDomMode : dict.player.illustrativeView}
+          <span className="inline-flex items-center gap-1.5 rounded-xl bg-white/92 px-3.5 py-2 text-xs font-extrabold text-[#1f607d] shadow-xs">
+            <span>◈</span>
+            <span>
+              {domAccessibleMode ? dict.player.accessibleDomMode : dict.player.illustrativeView}
+            </span>
           </span>
           <span className="g1-tag bg-white/90 font-mono text-[11px] text-[#355670]">
             {definition.sceneId} · {mode === "simulation" ? "GUIDED" : "INQUIRY"}
@@ -229,15 +348,18 @@ export function LabStageCanvas({
         {domAccessibleMode ? (
           <div
             tabIndex={0}
-            aria-label="2D Accessible laboratory controls"
+            aria-label={isTe ? "2D అందుబాటులో ఉండే ప్రయోగశాల నియంత్రణలు" : "2D Accessible laboratory controls"}
             className="relative z-10 my-4 flex-1 overflow-y-auto rounded-2xl border border-[#cde6f5] bg-white p-5"
           >
             <h3 className="text-base font-extrabold text-[#0c2444]">
-              2D Accessible DOM Control Equivalent (WCAG 2.2 AA Parity)
+              {isTe
+                ? "2D అందుబాటులో ఉండే DOM నియంత్రణలు (WCAG 2.2 AA సమానత్వం)"
+                : "2D Accessible DOM Control Equivalent (WCAG 2.2 AA Parity)"}
             </h3>
             <p className="mt-1 text-xs text-[#4b637a]">
-              Every action below submits the exact same typed server command and earns the exact
-              same rubric credit as pointer interaction.
+              {isTe
+                ? "క్రింది ప్రతి చర్య పాయింటర్ ఇంటరాక్షన్‌తో సమానమైన సర్వర్ ఆదేశాన్ని పంపుతుంది మరియు అదే రూబ్రిక్ ఫలితాన్ని ఇస్తుంది."
+                : "Every action below submits the exact same typed server command and earns the exact same rubric credit as pointer interaction."}
             </p>
             <div className="mt-4 space-y-2.5">
               {equipmentActions.map((act) => (
@@ -257,24 +379,47 @@ export function LabStageCanvas({
                     <div>{act.label}</div>
                     <div className="mt-0.5 font-normal text-[#4b637a]">{act.detail}</div>
                   </div>
-                  <span className="shrink-0 text-[11px] font-extrabold text-[#007875]">Run →</span>
+                  <span className="shrink-0 text-[11px] font-extrabold text-[#007875]">
+                    {isTe ? "అమలు చేయి →" : "Run →"}
+                  </span>
                 </button>
               ))}
             </div>
           </div>
         ) : (
-          <div className="relative flex flex-1 flex-col items-center justify-center py-4">
+          <div className="relative flex flex-1 flex-col items-center justify-center py-3">
             <div
-              className="relative flex w-full max-w-[680px] items-center justify-center transition-transform duration-150"
+              className="relative flex w-full max-w-[740px] items-center justify-center transition-transform duration-150"
               style={{ transform: `scale(${viewZoom})` }}
             >
-              {/* Approved concept SVG base */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={copy.imagePath}
-                alt={`${copy.title} — apparatus diagram (illustrative concept, not to scale)`}
-                className="max-h-[340px] w-full rounded-xl object-contain"
+                alt={`${copy.title} — ${isTe ? "పరికరాల నమూనా చిత్రం (కొలతకు కాదు)" : "apparatus diagram (illustrative concept, not to scale)"}`}
+                className="max-h-[340px] w-full rounded-xl object-contain drop-shadow-sm"
               />
+            </div>
+
+            {/* Interactive Stage Hotspots (G1-34: pointer + keyboard parity right on the visual canvas) */}
+            <div
+              aria-label={isTe ? "ఇంటరాక్టివ్ పరికరాల హాట్‌స్పాట్‌లు" : "Interactive apparatus stage controls"}
+              className="mt-3 flex flex-wrap items-center justify-center gap-2"
+            >
+              {equipmentActions
+                .filter((a) => !a.dangerGuard)
+                .map((act) => (
+                  <button
+                    key={act.id}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => void onDispatch(act.args)}
+                    data-testid={`stage-hotspot-${act.id}`}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-[#84b8d1] bg-white/95 px-3 py-1.5 text-xs font-extrabold text-[#0c2444] shadow-xs transition hover:bg-[#eef9ff] disabled:opacity-50"
+                  >
+                    <MousePointerClick className="h-3.5 w-3.5 text-[#007875]" aria-hidden="true" />
+                    <span>{act.shortHotspotLabel}</span>
+                  </button>
+                ))}
             </div>
 
             {/* Live server-confirmed state badges overlaid below diagram — ONLY reflects accepted server state */}
@@ -285,11 +430,19 @@ export function LabStageCanvas({
               {subject === "chemistry" && (
                 <>
                   <span className={`g1-tag ${state.apparatusConnected ? "g1-tag-green" : "bg-white"}`}>
-                    {state.apparatusConnected ? "✓ Delivery tube → soap solution connected" : "Delivery tube not yet connected"}
+                    {state.apparatusConnected
+                      ? isTe
+                        ? "✓ డెలివరీ ట్యూబ్ → సబ్బు ద్రావణం కనెక్ట్ చేయబడింది"
+                        : "✓ Delivery tube → soap solution connected"
+                      : isTe
+                        ? "డెలివరీ ట్యూబ్ ఇంకా కనెక్ట్ కాలేదు"
+                        : "Delivery tube not yet connected"}
                   </span>
                   {state.theoreticalH2Umol !== null && state.theoreticalH2Umol !== undefined && (
                     <span className="g1-tag g1-tag-blue">
-                      Confirmed H₂ upper bound: {state.theoreticalH2Umol} µmol (theoretical)
+                      {isTe
+                        ? `నిర్ధారించిన H₂ గరిష్ట పరిమితి: ${state.theoreticalH2Umol} µmol (సైద్ధాంతికం)`
+                        : `Confirmed H₂ upper bound: ${state.theoreticalH2Umol} µmol (theoretical)`}
                     </span>
                   )}
                 </>
@@ -298,11 +451,18 @@ export function LabStageCanvas({
               {subject === "physics" && (
                 <>
                   <span className={`g1-tag ${state.slabMounted ? "g1-tag-green" : "bg-white"}`}>
-                    {state.slabMounted ? "✓ Glass slab aligned to normal" : "Slab not yet mounted"}
+                    {state.slabMounted
+                      ? isTe
+                        ? "✓ గాజు దిమ్మె లంబానికి అనుగుణంగా అమర్చబడింది"
+                        : "✓ Glass slab aligned to normal"
+                      : isTe
+                        ? "గాజు దిమ్మె ఇంకా అమర్చబడలేదు"
+                        : "Slab not yet mounted"}
                   </span>
                   {state.refractedAngleDeg !== null && state.refractedAngleDeg !== undefined && (
                     <span className="g1-tag g1-tag-blue">
-                      i = {state.incidentAngleDeg}° · r = {state.refractedAngleDeg}° · offset = {state.transverseOffsetMm} mm
+                      i = {state.incidentAngleDeg}° · r = {state.refractedAngleDeg}° ·{" "}
+                      {isTe ? "విస్థాపనం" : "offset"} = {state.transverseOffsetMm} mm
                     </span>
                   )}
                 </>
@@ -312,12 +472,17 @@ export function LabStageCanvas({
                 <>
                   <span className={`g1-tag ${state.slideLoaded ? "g1-tag-green" : "bg-white"}`}>
                     {state.slideLoaded
-                      ? `✓ Field ${state.selectedField ?? 0} · Plane ${state.acquiredPlane ?? 0}`
-                      : "Slide not yet selected"}
+                      ? isTe
+                        ? `✓ ఫీల్డ్ ${state.selectedField ?? 0} · ప్లేన్ ${state.acquiredPlane ?? 0}`
+                        : `✓ Field ${state.selectedField ?? 0} · Plane ${state.acquiredPlane ?? 0}`
+                      : isTe
+                        ? "స్లైడ్ ఇంకా ఎంచుకోబడలేదు"
+                        : "Slide not yet selected"}
                   </span>
                   {state.annotatedStructures && state.annotatedStructures.length > 0 && (
                     <span className="g1-tag g1-tag-blue">
-                      Marked: {state.annotatedStructures.join(", ")}
+                      {isTe ? "గుర్తించినవి: " : "Marked: "}
+                      {state.annotatedStructures.join(", ")}
                     </span>
                   )}
                 </>
@@ -330,19 +495,21 @@ export function LabStageCanvas({
         {showEquipmentDrawer && !domAccessibleMode && (
           <div
             role="region"
-            aria-label="Accessible equipment list"
+            aria-label={isTe ? "అందుబాటులో ఉండే పరికరాల జాబితా" : "Accessible equipment list"}
             className="relative z-20 mb-3 max-h-[240px] overflow-y-auto rounded-2xl border border-[#b9d8ec] bg-white p-4 shadow-lg"
           >
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#0c2444]">
-                Equipment &amp; Guard Actions ({definition.requiredApparatus.length} items)
+                {isTe
+                  ? `పరికరాలు & భద్రతా తనిఖీ చర్యలు (${definition.requiredApparatus.length} పరికరాలు)`
+                  : `Equipment & Guard Actions (${definition.requiredApparatus.length} items)`}
               </h3>
               <button
                 type="button"
                 onClick={() => setShowEquipmentDrawer(false)}
                 className="text-xs font-bold text-[#007875] hover:underline"
               >
-                Close
+                {isTe ? "మూసివేయి" : "Close"}
               </button>
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -370,39 +537,22 @@ export function LabStageCanvas({
             </div>
           </div>
         )}
+      </div>
 
-        {/* Bottom stage toolbar matching 06 & 07 references */}
-        <div className="relative z-10 flex flex-wrap items-center justify-between gap-2 pt-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setViewZoom(1);
-                setShowEquipmentDrawer(false);
-              }}
-              className="g1-btn g1-btn-outline min-h-[38px] px-3.5 text-xs"
-            >
-              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>{dict.player.resetView}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setDomAccessibleMode((v) => !v)}
-              aria-pressed={domAccessibleMode}
-              className="g1-btn g1-btn-outline min-h-[38px] px-3.5 text-xs"
-              data-testid="toggle-dom-mode"
-            >
-              {domAccessibleMode ? (
-                <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-              ) : (
-                <Accessibility className="h-3.5 w-3.5" aria-hidden="true" />
-              )}
-              <span>
-                {domAccessibleMode ? dict.player.canvasViewMode : dict.player.accessibleDomMode}
-              </span>
-            </button>
-          </div>
-
+      {/* Bottom stage toolbar matching 03_Simulation_Player_Premium.png */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-1 pt-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => {
+              setViewZoom(1);
+              setShowEquipmentDrawer(false);
+            }}
+            className="g1-btn g1-btn-outline min-h-[38px] bg-white px-2.5 text-xs"
+          >
+            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>{dict.player.resetView}</span>
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -410,13 +560,50 @@ export function LabStageCanvas({
               setShowEquipmentDrawer((v) => !v);
             }}
             aria-expanded={showEquipmentDrawer}
-            className="g1-btn g1-btn-outline min-h-[38px] px-3.5 text-xs"
+            className="g1-btn g1-btn-outline min-h-[38px] bg-white px-2.5 text-xs"
             data-testid="toggle-equipment-list"
           >
             <ListChecks className="h-3.5 w-3.5" aria-hidden="true" />
             <span>{dict.player.equipmentList}</span>
           </button>
+          <button
+            type="button"
+            onClick={() => setDomAccessibleMode((v) => !v)}
+            aria-pressed={domAccessibleMode}
+            className="g1-btn g1-btn-outline min-h-[38px] bg-white px-2.5 text-xs"
+            data-testid="toggle-dom-mode"
+          >
+            {domAccessibleMode ? (
+              <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+            ) : (
+              <Accessibility className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
+            <span>
+              {domAccessibleMode ? dict.player.canvasViewMode : dict.player.accessibleDomMode}
+            </span>
+          </button>
         </div>
+
+        {/* Truthful stage save badge (never claims saved when offline/unsaved intent exists — W05) */}
+        <span
+          className={`inline-flex items-center gap-1 rounded-xl px-3 py-1.5 font-mono text-xs font-extrabold ${
+            isOffline || hasUnsavedIntent
+              ? "border border-[#f5d5a3] bg-[#fff4d7] text-[#805100]"
+              : "bg-[#e5f9ef] text-[#046c49]"
+          }`}
+          data-testid="stage-save-pill"
+        >
+          <span>{isOffline || hasUnsavedIntent ? "⚠" : "✓"}</span>
+          <span>
+            {isOffline || hasUnsavedIntent
+              ? isTe
+                ? `ఆఫ్‌లైన్ · చివరి రివిజన్ ${revision}`
+                : `Offline · Last confirmed rev ${revision}`
+              : isTe
+                ? `సేవ్ చేయబడిన రివిజన్ ${revision}`
+                : `Saved rev ${revision}`}
+          </span>
+        </span>
       </div>
     </div>
   );

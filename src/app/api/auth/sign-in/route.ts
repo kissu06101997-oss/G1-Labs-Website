@@ -15,6 +15,17 @@ import type { Locale, PrincipalRole } from "@/lib/types";
 const signInSchema = z.object({
   email: z.string().email().max(200),
   password: z.string().min(8).max(128),
+  requestedRole: z
+    .enum([
+      "student",
+      "teacher",
+      "school_admin",
+      "district_admin",
+      "state_admin",
+      "content_editor",
+      "content_reviewer",
+    ])
+    .optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -66,7 +77,12 @@ export async function POST(req: NextRequest) {
 
   const user = userRes.rows[0];
   if (!user || !user.enabled || !verifyPassword(parsed.data.password, user.password_salt, user.password_hash)) {
-    return apiError(401, "NOT_AUTHORIZED", "Invalid account credentials.");
+    return apiError(401, "NOT_AUTHORIZED", "Invalid account credentials or account disabled.");
+  }
+
+  const allowSynthetic = process.env.ALLOW_LOCAL_SYNTHETIC_FIXTURES === "true";
+  if (user.is_synthetic && !allowSynthetic) {
+    return apiError(403, "NOT_AUTHORIZED", "Synthetic QA accounts are disabled in this environment.");
   }
 
   const roleRes = await query<{
@@ -76,15 +92,33 @@ export async function POST(req: NextRequest) {
   }>(
     `SELECT role, school_id, district_id
      FROM role_grant
-     WHERE principal_id = $1 AND revoked_at IS NULL
+     WHERE principal_id = $1
+       AND revoked_at IS NULL
+       AND ($2::text IS NULL OR role::text = $2)
      ORDER BY grant_id ASC
      LIMIT 1`,
-    [user.principal_id]
+    [user.principal_id, parsed.data.requestedRole ?? null]
   );
 
   const grant = roleRes.rows[0];
   if (!grant) {
-    return apiError(403, "NOT_AUTHORIZED", "Account has no active authorized role.");
+    return apiError(403, "NOT_AUTHORIZED", "Account has no active authorized role grant.");
+  }
+
+  if (grant.role === "student") {
+    const learnerRes = await query<{ active: boolean }>(
+      `SELECT active FROM school_learner
+       WHERE principal_id = $1 AND school_id = $2
+       LIMIT 1`,
+      [user.principal_id, grant.school_id]
+    );
+    if (!learnerRes.rows[0]?.active) {
+      return apiError(
+        403,
+        "NOT_AUTHORIZED",
+        "Student enrollment is currently disabled by your school administrator."
+      );
+    }
   }
 
   clearAuthRateLimit(rateKey);
@@ -112,13 +146,20 @@ export async function POST(req: NextRequest) {
           ? "/content"
           : "/admin";
 
-  const response = NextResponse.json({
-    authenticated: true,
-    role: grant.role,
-    displayName: user.display_name,
-    preferredLocale: user.preferred_locale,
-    redirectTo,
-  });
+  const response = NextResponse.json(
+    {
+      authenticated: true,
+      role: grant.role,
+      displayName: user.display_name,
+      preferredLocale: user.preferred_locale,
+      redirectTo,
+    },
+    {
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    }
+  );
 
   attachSessionCookies(
     response,

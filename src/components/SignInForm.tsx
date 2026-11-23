@@ -13,15 +13,60 @@ interface SignInFormProps {
 }
 
 const SYNTHETIC_ACCOUNTS = [
-  { label: "Student A (School A — Guntur, Class 10-A)", email: "student.a@school-guntur-01.test", role: "student" },
-  { label: "Student B (School B — Vijayawada, Class 10-A)", email: "student.b@school-vijayawada-02.test", role: "student" },
-  { label: "Teacher A (School A — Guntur, Class 10-A)", email: "teacher.a@school-guntur-01.test", role: "teacher" },
-  { label: "Teacher B (School B — Vijayawada, Class 10-A)", email: "teacher.b@school-vijayawada-02.test", role: "teacher" },
-  { label: "School Admin (School A — Guntur)", email: "schooladmin.a@school-guntur-01.test", role: "school_admin" },
-  { label: "District Admin (Guntur District)", email: "district.guntur@ap-edu.test", role: "district_admin" },
-  { label: "State Admin (Andhra Pradesh)", email: "state.ap@ap-edu.test", role: "state_admin" },
-  { label: "Content Editor (Editorial Workflow)", email: "editor@g1virtualabs.test", role: "content_editor" },
-  { label: "Content Reviewer (Independent Two-Person Sign-Off)", email: "reviewer@g1virtualabs.test", role: "content_reviewer" },
+  {
+    labelEn: "Student A (School A — Guntur, Class 10-A)",
+    labelTe: "విద్యార్థి A (పాఠశాల A — గుంటూరు, 10వ తరగతి-A)",
+    email: "student.a@school-guntur-01.test",
+    role: "student",
+  },
+  {
+    labelEn: "Student B (School B — Vijayawada, Class 10-A)",
+    labelTe: "విద్యార్థి B (పాఠశాల B — విజయవాడ, 10వ తరగతి-A)",
+    email: "student.b@school-vijayawada-02.test",
+    role: "student",
+  },
+  {
+    labelEn: "Teacher A (School A — Guntur, Class 10-A)",
+    labelTe: "ఉపాధ్యాయుడు A (పాఠశాల A — గుంటూరు, 10వ తరగతి-A)",
+    email: "teacher.a@school-guntur-01.test",
+    role: "teacher",
+  },
+  {
+    labelEn: "Teacher B (School B — Vijayawada, Class 10-A)",
+    labelTe: "ఉపాధ్యాయుడు B (పాఠశాల B — విజయవాడ, 10వ తరగతి-A)",
+    email: "teacher.b@school-vijayawada-02.test",
+    role: "teacher",
+  },
+  {
+    labelEn: "School Admin (School A — Guntur)",
+    labelTe: "పాఠశాల నిర్వాహకుడు (పాఠశాల A — గుంటూరు)",
+    email: "schooladmin.a@school-guntur-01.test",
+    role: "school_admin",
+  },
+  {
+    labelEn: "District Admin (Guntur District)",
+    labelTe: "జిల్లా నిర్వాహకుడు (గుంటూరు జిల్లా)",
+    email: "district.guntur@ap-edu.test",
+    role: "district_admin",
+  },
+  {
+    labelEn: "State Admin (Andhra Pradesh)",
+    labelTe: "రాష్ట్ర నిర్వాహకుడు (ఆంధ్రప్రదేశ్)",
+    email: "state.ap@ap-edu.test",
+    role: "state_admin",
+  },
+  {
+    labelEn: "Content Editor (Editorial Workflow)",
+    labelTe: "కంటెంట్ ఎడిటర్ (పాఠ్యప్రణాళిక సవరణ)",
+    email: "editor@g1virtualabs.test",
+    role: "content_editor",
+  },
+  {
+    labelEn: "Content Reviewer (Independent Two-Person Sign-Off)",
+    labelTe: "కంటెంట్ సమీక్షకుడు (ఇద్దరు వ్యక్తుల స్వతంత్ర ఆమోదం)",
+    email: "reviewer@g1virtualabs.test",
+    role: "content_reviewer",
+  },
 ];
 
 export function SignInForm({
@@ -32,7 +77,9 @@ export function SignInForm({
 }: SignInFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState(
-    roleHint === "teacher" ? "teacher.a@school-guntur-01.test" : ""
+    showSyntheticFixtures && roleHint === "teacher"
+      ? "teacher.a@school-guntur-01.test"
+      : ""
   );
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -60,7 +107,12 @@ export function SignInForm({
       };
 
       if (!res.ok || !data.authenticated) {
-        setError(data.detail || "Unable to sign in with those credentials.");
+        setError(
+          data.detail ||
+            (isTe
+              ? "ఆ ఖాతా వివరాలతో సైన్ ఇన్ చేయడం సాధ్యం కాలేదు."
+              : "Unable to sign in with those credentials.")
+        );
         setSubmitting(false);
         return;
       }
@@ -73,14 +125,27 @@ export function SignInForm({
       router.push(safeNext);
       router.refresh();
     } catch {
-      setError("Network error while signing in.");
+      setError(
+        isTe
+          ? "సైన్ ఇన్ చేసేటప్పుడు నెట్‌వర్క్ లోపం ఏర్పడింది."
+          : "Network error while signing in."
+      );
       setSubmitting(false);
     }
   }
 
   return (
-    <div className={showSyntheticFixtures ? "grid grid-cols-1 gap-8 lg:grid-cols-12" : "mx-auto max-w-xl"}>
-      <section aria-labelledby="signin-heading" className={`g1-card p-7 ${showSyntheticFixtures ? "lg:col-span-6" : ""}`}>
+    <div
+      className={
+        showSyntheticFixtures
+          ? "grid grid-cols-1 gap-8 lg:grid-cols-12"
+          : "mx-auto max-w-xl"
+      }
+    >
+      <section
+        aria-labelledby="signin-heading"
+        className={`g1-card p-7 ${showSyntheticFixtures ? "lg:col-span-6" : ""}`}
+      >
         <div className="g1-eyebrow">
           {isTe ? "పాఠశాల ఖాతా ప్రవేశం" : "School account sign-in"}
         </div>
@@ -121,8 +186,12 @@ export function SignInForm({
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="student.a@school-guntur-01.test"
-              className="mt-1.5 h-12 w-full rounded-xl border border-[#c3d7e5] bg-[#f8fcff] px-4 text-sm text-[#0c2444]"
+              placeholder={
+                showSyntheticFixtures
+                  ? "student.a@school-guntur-01.test"
+                  : "name@school.ap.edu.in"
+              }
+              className="mt-1.5 h-12 w-full rounded-xl border border-[#7894aa] bg-[#f8fcff] px-4 text-sm text-[#0c2444]"
             />
           </div>
 
@@ -141,7 +210,7 @@ export function SignInForm({
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1.5 h-12 w-full rounded-xl border border-[#c3d7e5] bg-[#f8fcff] px-4 text-sm text-[#0c2444]"
+              className="mt-1.5 h-12 w-full rounded-xl border border-[#7894aa] bg-[#f8fcff] px-4 text-sm text-[#0c2444]"
             />
           </div>
 
@@ -162,7 +231,10 @@ export function SignInForm({
         </form>
 
         <div className="g1-hint mt-6 flex items-start gap-2.5">
-          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#007875]" aria-hidden="true" />
+          <ShieldCheck
+            className="mt-0.5 h-4 w-4 shrink-0 text-[#007875]"
+            aria-hidden="true"
+          />
           <span>
             {isTe
               ? "సెషన్ కుకీలు HTTP-only మరియు server-verified RBAC తో రక్షించబడతాయి. నిజమైన విద్యార్థుల వ్యక్తిగత డేటా సేకరించబడదు."
@@ -173,43 +245,54 @@ export function SignInForm({
 
       {/* Transparent local synthetic test roster helper — strictly gated by ALLOW_LOCAL_SYNTHETIC_FIXTURES */}
       {showSyntheticFixtures && (
-        <aside aria-labelledby="synthetic-roster-heading" className="g1-card p-7 lg:col-span-6">
-        <span className="g1-tag g1-tag-blue">Local QA Fixtures · Synthetic Only</span>
-        <h2
-          id="synthetic-roster-heading"
-          className="mt-3 text-xl font-extrabold text-[#0c2444]"
+        <aside
+          aria-labelledby="synthetic-roster-heading"
+          className="g1-card p-7 lg:col-span-6"
+          data-testid="synthetic-fixtures-panel"
         >
-          {isTe ? "స్థానిక పరీక్షా ఖాతాలు" : "Seeded local synthetic accounts"}
-        </h2>
-        <p className="mt-1.5 text-xs leading-relaxed text-[#4b637a]">
-          Select any seeded local role below to prefill credentials for testing role isolation,
-          two-mode launches, teacher assignment publishing, and editorial sign-off. All accounts
-          share the local fixture password <code className="rounded bg-[#eef6fb] px-1.5 py-0.5 font-mono text-[#0c2444]">G1LocalTest!2026</code>.
-        </p>
+          <span className="g1-tag g1-tag-blue">
+            {isTe ? "స్థానిక QA ఖాతాలు · సింథటిక్ మాత్రమే" : "Local QA Fixtures · Synthetic Only"}
+          </span>
+          <h2
+            id="synthetic-roster-heading"
+            className="mt-3 text-xl font-extrabold text-[#0c2444]"
+          >
+            {isTe ? "స్థానిక పరీక్షా ఖాతాలు" : "Seeded local synthetic accounts"}
+          </h2>
+          <p className="mt-1.5 text-xs leading-relaxed text-[#4b637a]">
+            {isTe
+              ? "పాత్రల వేర్పాటు, రెండు-మోడ్‌ల ప్రయోగాలు, ఉపాధ్యాయ అసైన్‌మెంట్ ప్రచురణ మరియు సమీక్షా ఆమోదాన్ని పరీక్షించడానికి ఏదైనా స్థానిక ఖాతాను ఎంచుకోండి."
+              : "Select any seeded local role below to prefill credentials for testing role isolation, two-mode launches, teacher assignment publishing, and editorial sign-off."}
+          </p>
 
-        <ul className="mt-4 divide-y divide-[#e8f0f5] rounded-2xl border border-[#ddebf3]">
-          {SYNTHETIC_ACCOUNTS.map((acc) => (
-            <li key={acc.email} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
-              <div>
-                <div className="text-xs font-extrabold text-[#0c2444]">{acc.label}</div>
-                <div className="font-mono text-[11px] text-[#4b637a]">{acc.email}</div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail(acc.email);
-                  setPassword("G1LocalTest!2026");
-                  setError(null);
-                }}
-                className="rounded-lg border border-[#c3d7e5] bg-white px-3 py-1.5 text-xs font-bold text-[#007875] hover:bg-[#eef8ff]"
-                data-testid={`fill-${acc.email}`}
+          <ul className="mt-4 divide-y divide-[#e8f0f5] rounded-2xl border border-[#ddebf3]">
+            {SYNTHETIC_ACCOUNTS.map((acc) => (
+              <li
+                key={acc.email}
+                className="flex flex-wrap items-center justify-between gap-2 px-4 py-3"
               >
-                Use fixture
-              </button>
-            </li>
-          ))}
-        </ul>
-      </aside>
+                <div>
+                  <div className="text-xs font-extrabold text-[#0c2444]">
+                    {isTe ? acc.labelTe : acc.labelEn}
+                  </div>
+                  <div className="font-mono text-[11px] text-[#4b637a]">{acc.email}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail(acc.email);
+                    setPassword("G1LocalTest!2026");
+                    setError(null);
+                  }}
+                  className="rounded-lg border border-[#7894aa] bg-white px-3 py-1.5 text-xs font-bold text-[#007875] hover:bg-[#eef8ff]"
+                  data-testid={`fill-${acc.email}`}
+                >
+                  {isTe ? "ఖాతా నింపు" : "Use fixture"}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </aside>
       )}
     </div>
   );

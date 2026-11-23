@@ -22,7 +22,7 @@ export async function apiFetch<T = unknown>(
     idempotencyKey?: string;
     csrfToken?: string;
   }
-): Promise<{ ok: boolean; status: number; data: T }> {
+): Promise<{ ok: boolean; status: number; data: T; networkError?: boolean }> {
   const method = options?.method ?? "GET";
   const headers: Record<string, string> = {};
 
@@ -36,13 +36,26 @@ export async function apiFetch<T = unknown>(
     headers["Idempotency-Key"] = options?.idempotencyKey ?? generateIdempotencyKey();
   }
 
-  const res = await fetch(url, {
-    method,
-    headers,
-    credentials: "same-origin",
-    body: options?.body !== undefined ? JSON.stringify(options.body) : undefined,
-  });
+  try {
+    const res = await fetch(url, {
+      method,
+      headers,
+      credentials: "same-origin",
+      body: options?.body !== undefined ? JSON.stringify(options.body) : undefined,
+    });
 
-  const data = (await res.json().catch(() => ({}))) as T;
-  return { ok: res.ok, status: res.status, data };
+    const data = (await res.json().catch(() => ({}))) as T;
+    return { ok: res.ok, status: res.status, data, networkError: false };
+  } catch {
+    return {
+      ok: false,
+      status: 0,
+      networkError: true,
+      data: {
+        reasonCode: "NETWORK_OFFLINE",
+        detail:
+          "Network connection unavailable. Your last confirmed server checkpoint revision remains intact.",
+      } as unknown as T,
+    };
+  }
 }

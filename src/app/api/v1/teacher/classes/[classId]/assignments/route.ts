@@ -9,6 +9,7 @@ import {
 } from "@/lib/auth";
 import { canonicalJson, newUuid, sha256Hex } from "@/lib/crypto";
 import { query, withTransaction } from "@/lib/db";
+import type { LabMode } from "@/lib/types";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -17,10 +18,19 @@ const publishAssignmentSchema = z
     experimentId: z.string().min(1).max(350),
     contentVersion: z.string().min(1).max(350),
     rubricId: z.string().min(1).max(350),
+    rubricByMode: z
+      .object({
+        simulation: z.string().min(1).max(350).optional(),
+        experiment: z.string().min(1).max(350).optional(),
+      })
+      .optional(),
     modes: z.array(z.enum(["simulation", "experiment"])).min(1).max(2),
     dueAt: z.string().datetime({ offset: true }),
+    latePolicy: z.enum(["allow_late_flagged", "block_new_after_due"]).optional(),
     attemptLimit: z.number().int().min(1).max(20),
     localeBundleVersion: z.string().min(1).max(128),
+    supersedesAssignmentId: z.string().uuid().nullable().optional(),
+    revisionNotes: z.string().max(500).nullable().optional(),
   })
   .strict();
 
@@ -60,10 +70,16 @@ export async function GET(
     rubric_id: string;
     locale_bundle_version: string;
     due_at: Date | null;
+    late_policy: string;
     max_attempts: number;
+    revision_number: number;
+    supersedes_assignment_id: string | null;
+    superseded_at: Date | null;
+    revision_notes: string | null;
     subject: string;
     title: string;
     modes: string[];
+    mode_rubrics: Array<{ mode: LabMode; rubric_id: string | null }>;
     submissions: string;
   }>(
     `SELECT
@@ -73,10 +89,16 @@ export async function GET(
        a.rubric_id,
        a.locale_bundle_version,
        a.due_at,
+       COALESCE(a.late_policy, 'allow_late_flagged') AS late_policy,
        a.max_attempts,
+       COALESCE(a.revision_number, 1) AS revision_number,
+       a.supersedes_assignment_id,
+       a.superseded_at,
+       a.revision_notes,
        ev.subject,
        ev.definition->>'title' AS title,
        ARRAY_AGG(DISTINCT am.mode::text ORDER BY am.mode::text) AS modes,
+       JSONB_AGG(JSONB_BUILD_OBJECT('mode', am.mode::text, 'rubric_id', COALESCE(am.rubric_id, a.rubric_id))) AS mode_rubrics,
        (
          SELECT count(DISTINCT asm.attempt_id)::text
          FROM assessment asm
@@ -102,10 +124,16 @@ export async function GET(
       rubricId: r.rubric_id,
       localeBundleVersion: r.locale_bundle_version,
       dueAt: r.due_at ? r.due_at.toISOString() : null,
+      latePolicy: r.late_policy,
       attemptLimit: r.max_attempts,
+      revisionNumber: r.revision_number,
+      supersedesAssignmentId: r.supersedes_assignment_id,
+      supersededAt: r.superseded_at ? r.superseded_at.toISOString() : null,
+      revisionNotes: r.revision_notes,
       subject: r.subject,
       title: r.title,
       modes: r.modes,
+      modeRubrics: r.mode_rubrics,
       submissions: Number(r.submissions),
     })),
   });
@@ -190,7 +218,14 @@ export async function POST(
     const expRes = await client.query<{
       published_at: Date | null;
       retired_at: Date | null;
-      definition: { publicationStatus: string; assessmentIds: string[] };
+      definition: {
+        publicationStatus: string;
+        assessmentIds: string[];
+        modeConfigurations?: {
+          simulation?: { rubricId?: string };
+          experiment?: { rubricId?: string };
+        };
+      };
     }>(
       `SELECT published_at, retired_at, definition
        FROM experiment_version
@@ -214,11 +249,46 @@ export async function POST(
       };
     }
 
+    // 4. Handle immutable revision/amendment if supersedesAssignmentId is specified (W02 / G1-20)
+    let revisionNumber = 1;
+    const supersedesId = input.supersedesAssignmentId ?? null;
+    if (supersedesId) {
+      const priorRes = await client.query<{
+        assignment_id: string;
+        revision_number: number;
+      }>(
+        `SELECT assignment_id, COALESCE(revision_number, 1) AS revision_number
+         FROM assignment
+         WHERE school_id = $1 AND class_id = $2 AND assignment_id = $3
+         FOR UPDATE`,
+        [auth.schoolId, classId, supersedesId]
+      );
+      if (!priorRes.rows[0]) {
+        return {
+          status: 404,
+          error: {
+            reasonCode: "NOT_FOUND" as const,
+            detail: "Assignment to amend was not found in this class.",
+          },
+        };
+      }
+      revisionNumber = Number(priorRes.rows[0].revision_number) + 1;
+      await client.query(
+        `UPDATE assignment SET superseded_at = now()
+         WHERE school_id = $1 AND assignment_id = $2 AND superseded_at IS NULL`,
+        [auth.schoolId, supersedesId]
+      );
+    }
+
+    const latePolicy = input.latePolicy ?? "allow_late_flagged";
     const assignmentId = newUuid();
+
     await client.query(
       `INSERT INTO assignment
-        (school_id, assignment_id, class_id, experiment_id, content_version, rubric_id, locale_bundle_version, due_at, max_attempts, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        (school_id, assignment_id, class_id, experiment_id, content_version, rubric_id,
+         locale_bundle_version, due_at, late_policy, max_attempts, revision_number,
+         supersedes_assignment_id, revision_notes, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
       [
         auth.schoolId,
         assignmentId,
@@ -228,22 +298,39 @@ export async function POST(
         input.rubricId,
         input.localeBundleVersion,
         input.dueAt,
+        latePolicy,
         input.attemptLimit,
+        revisionNumber,
+        supersedesId,
+        input.revisionNotes ?? null,
         auth.principalId,
       ]
     );
 
+    const rubricByModeOut: Partial<Record<LabMode, string>> = {};
     for (const m of uniqueModes) {
+      const modeDefaultRubric =
+        m === "simulation"
+          ? expRow.definition.modeConfigurations?.simulation?.rubricId
+          : expRow.definition.modeConfigurations?.experiment?.rubricId;
+      const modeRubric =
+        input.rubricByMode?.[m] || modeDefaultRubric || input.rubricId;
+      rubricByModeOut[m] = modeRubric;
+
       await client.query(
-        `INSERT INTO assignment_mode (school_id, assignment_id, mode)
-         VALUES ($1, $2, $3::lab_mode)`,
-        [auth.schoolId, assignmentId, m]
+        `INSERT INTO assignment_mode (school_id, assignment_id, mode, rubric_id)
+         VALUES ($1, $2, $3::lab_mode, $4)`,
+        [auth.schoolId, assignmentId, m, modeRubric]
       );
     }
 
     const responseBody = {
       assignmentId,
       status: "published" as const,
+      revisionNumber,
+      supersedesAssignmentId: supersedesId,
+      latePolicy,
+      rubricByMode: rubricByModeOut,
     };
 
     await client.query(
@@ -255,9 +342,9 @@ export async function POST(
     await recordAuditEvent(
       {
         schoolId: auth.schoolId,
-        actionType: "teacher.assignment_published",
+        actionType: supersedesId ? "teacher.assignment_amended" : "teacher.assignment_published",
         actorId: auth.principalId,
-        subjectKey: `${classId}:${assignmentId}:${input.experimentId}@${input.contentVersion}`,
+        subjectKey: `${classId}:${assignmentId}:${input.experimentId}@${input.contentVersion}:rev${revisionNumber}`,
       },
       client
     );

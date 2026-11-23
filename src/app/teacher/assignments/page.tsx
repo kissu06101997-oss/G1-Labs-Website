@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
-import { AssignmentBuilder } from "@/components/AssignmentBuilder";
+import { AssignmentBuilder, type ExistingAssignmentRow } from "@/components/AssignmentBuilder";
 import { TeacherSidebar } from "@/components/TeacherSidebar";
 import { getCurrentSession, getRequestLocale } from "@/lib/auth";
 import { listCatalogExperiments } from "@/lib/catalog";
 import { query } from "@/lib/db";
-import { getDictionary, getExperimentCopy } from "@/lib/i18n";
+import { getDictionary } from "@/lib/i18n";
 
 export default async function TeacherAssignmentsPage() {
   const [auth, locale] = await Promise.all([getCurrentSession(), getRequestLocale()]);
@@ -31,17 +31,25 @@ export default async function TeacherAssignmentsPage() {
     classIds.length > 0
       ? await query<{
           assignment_id: string;
+          class_id: string;
           class_label: string;
           experiment_id: string;
           content_version: string;
           rubric_id: string;
           due_at: Date | null;
+          late_policy: "allow_late_flagged" | "block_new_after_due";
           max_attempts: number;
+          revision_number: number;
+          supersedes_assignment_id: string | null;
+          superseded_at: Date | null;
+          revision_notes: string | null;
           modes: string[];
         }>(
           `SELECT
-             a.assignment_id, cl.label AS class_label, a.experiment_id, a.content_version,
-             a.rubric_id, a.due_at, a.max_attempts,
+             a.assignment_id, a.class_id, cl.label AS class_label, a.experiment_id, a.content_version,
+             a.rubric_id, a.due_at, COALESCE(a.late_policy, 'allow_late_flagged') AS late_policy,
+             a.max_attempts, COALESCE(a.revision_number, 1) AS revision_number,
+             a.supersedes_assignment_id, a.superseded_at, a.revision_notes,
              ARRAY_AGG(DISTINCT am.mode::text ORDER BY am.mode::text) AS modes
            FROM assignment a
            JOIN classroom cl ON cl.school_id = a.school_id AND cl.class_id = a.class_id
@@ -53,10 +61,27 @@ export default async function TeacherAssignmentsPage() {
         )
       : { rows: [] };
 
+  const existingAssignments: ExistingAssignmentRow[] = existingRes.rows.map((row) => ({
+    assignmentId: row.assignment_id,
+    classId: row.class_id,
+    classLabel: row.class_label,
+    experimentId: row.experiment_id,
+    contentVersion: row.content_version,
+    rubricId: row.rubric_id,
+    dueAt: row.due_at ? row.due_at.toISOString() : null,
+    latePolicy: row.late_policy,
+    maxAttempts: row.max_attempts,
+    revisionNumber: Number(row.revision_number ?? 1),
+    supersedesAssignmentId: row.supersedes_assignment_id,
+    supersededAt: row.superseded_at ? row.superseded_at.toISOString() : null,
+    revisionNotes: row.revision_notes,
+    modes: row.modes,
+  }));
+
   return (
     <>
       <AppHeader variant="teacher" locale={locale} auth={auth} />
-      <div className="mx-auto flex w-full max-w-[1480px] flex-1 flex-col lg:flex-row">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col lg:flex-row">
         <TeacherSidebar active="assignments" locale={locale} schoolName={auth.schoolName} />
 
         <main id="main-content" className="flex-1 space-y-6 px-4 py-8 sm:px-8 lg:px-10">
@@ -74,59 +99,9 @@ export default async function TeacherAssignmentsPage() {
               grade: c.grade,
             }))}
             experiments={experiments}
+            existingAssignments={existingAssignments}
+            locale={locale}
           />
-
-          <section className="g1-card overflow-hidden">
-            <div className="border-b border-[#e8f0f5] px-6 py-4">
-              <h2 className="text-lg font-extrabold text-[#0c2444]">Published class assignments</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left text-sm">
-                <thead>
-                  <tr className="bg-[#f2f8fc] text-[11px] font-bold uppercase tracking-wider text-[#4b637a]">
-                    <th className="px-6 py-3">Class</th>
-                    <th className="px-4 py-3">Experiment</th>
-                    <th className="px-4 py-3">Rubric</th>
-                    <th className="px-4 py-3">Modes</th>
-                    <th className="px-4 py-3">Attempts</th>
-                    <th className="px-6 py-3">Due</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#e8f0f5]">
-                  {existingRes.rows.map((row) => (
-                    <tr key={row.assignment_id}>
-                      <td className="px-6 py-3.5 font-semibold text-[#0c2444]">{row.class_label}</td>
-                      <td className="px-4 py-3.5">
-                        <div className="font-bold text-[#0c2444]">
-                          {getExperimentCopy(row.experiment_id, locale).shortTitle}
-                        </div>
-                        <div className="font-mono text-xs text-[#4b637a]">
-                          {row.experiment_id} · v{row.content_version}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5 font-mono text-xs text-[#4b637a]">{row.rubric_id}</td>
-                      <td className="px-4 py-3.5">
-                        <div className="flex flex-wrap gap-1.5">
-                          {row.modes.map((m) => (
-                            <span
-                              key={m}
-                              className={`g1-tag ${m === "experiment" ? "g1-tag-green" : "g1-tag-blue"}`}
-                            >
-                              {m === "experiment" ? dict.common.experiment : dict.common.simulation}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5 text-[#133354]">{row.max_attempts}</td>
-                      <td className="px-6 py-3.5 text-xs text-[#4b637a]">
-                        {row.due_at ? new Date(row.due_at).toLocaleDateString("en-IN") : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
         </main>
       </div>
     </>

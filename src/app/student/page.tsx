@@ -14,13 +14,20 @@ export default async function StudentDashboardPage() {
     redirect("/sign-in?next=/student");
   }
   if (auth.role !== "student" || !auth.schoolId || !auth.learnerId) {
-    redirect(auth.role === "teacher" ? "/teacher" : auth.role === "content_editor" || auth.role === "content_reviewer" ? "/content" : "/admin");
+    redirect(
+      auth.role === "teacher"
+        ? "/teacher"
+        : auth.role === "content_editor" || auth.role === "content_reviewer"
+          ? "/content"
+          : "/admin"
+    );
   }
 
   const [activeRes, assignRes, resultsRes] = await Promise.all([
     query<{
       session_id: string;
       attempt_id: string;
+      assignment_id: string | null;
       experiment_id: string;
       content_version: string;
       mode: "simulation" | "experiment";
@@ -32,7 +39,7 @@ export default async function StudentDashboardPage() {
       grade: string;
     }>(
       `SELECT
-         ls.session_id, ls.attempt_id, a.experiment_id, a.content_version, a.mode::text,
+         ls.session_id, ls.attempt_id, a.assignment_id, a.experiment_id, a.content_version, a.mode::text,
          ls.revision::text, ls.state, ls.saved_at, ev.subject::text,
          ev.definition->>'title' AS title, ev.definition->>'grade' AS grade
        FROM lab_session ls
@@ -50,7 +57,10 @@ export default async function StudentDashboardPage() {
       content_version: string;
       rubric_id: string;
       due_at: Date | null;
+      is_past_due: boolean;
+      late_policy: string;
       max_attempts: number;
+      revision_number: number;
       subject: LabSubject;
       title: string;
       grade: string;
@@ -60,7 +70,10 @@ export default async function StudentDashboardPage() {
     }>(
       `SELECT
          asg.assignment_id, asg.class_id, cl.label AS class_label, asg.experiment_id,
-         asg.content_version, asg.rubric_id, asg.due_at, asg.max_attempts,
+         asg.content_version, asg.rubric_id, asg.due_at,
+         (asg.due_at IS NOT NULL AND asg.due_at < now()) AS is_past_due,
+         COALESCE(asg.late_policy, 'allow_late_flagged') AS late_policy,
+         asg.max_attempts, COALESCE(asg.revision_number, 1) AS revision_number,
          ev.subject::text, ev.definition->>'title' AS title, ev.definition->>'grade' AS grade,
          ARRAY_AGG(DISTINCT am.mode::text ORDER BY am.mode::text) AS modes,
          (
@@ -80,7 +93,7 @@ export default async function StudentDashboardPage() {
        JOIN classroom cl ON cl.school_id = asg.school_id AND cl.class_id = asg.class_id
        JOIN experiment_version ev ON ev.experiment_id = asg.experiment_id AND ev.content_version = asg.content_version
        JOIN assignment_mode am ON am.school_id = asg.school_id AND am.assignment_id = asg.assignment_id
-       WHERE asg.school_id = $1
+       WHERE asg.school_id = $1 AND asg.superseded_at IS NULL
        GROUP BY asg.school_id, asg.assignment_id, cl.label, ev.subject, ev.definition
        ORDER BY asg.due_at ASC NULLS LAST`,
       [auth.schoolId, auth.learnerId]
@@ -88,6 +101,10 @@ export default async function StudentDashboardPage() {
     query<{
       assessment_id: string;
       attempt_id: string;
+      assignment_id: string | null;
+      is_late: boolean;
+      session_id: string;
+      revision: string;
       experiment_id: string;
       content_version: string;
       mode: "simulation" | "experiment";
@@ -97,16 +114,49 @@ export default async function StudentDashboardPage() {
         gradeState: string;
         criteriaPassed?: number;
         criteriaTotal?: number;
+        criteria?: Array<{ id: string; label: string; passed: boolean }>;
         summary?: string;
         evidenceIds?: string[];
       };
+      observations: Array<{
+        observationId: string;
+        revision: number;
+        payload: Record<string, unknown>;
+      }>;
       created_at: Date;
     }>(
       `SELECT
-         asm.assessment_id, asm.attempt_id, att.experiment_id, att.content_version,
-         att.mode::text, ev.subject::text, asm.rubric_version, asm.result, asm.created_at
+         asm.assessment_id,
+         asm.attempt_id,
+         att.assignment_id,
+         COALESCE(att.is_late, false) AS is_late,
+         ls.session_id,
+         ls.revision::text,
+         att.experiment_id,
+         att.content_version,
+         att.mode::text,
+         ev.subject::text,
+         asm.rubric_version,
+         asm.result,
+         COALESCE(
+           (
+             SELECT JSONB_AGG(
+               JSONB_BUILD_OBJECT(
+                 'observationId', o.observation_id,
+                 'revision', o.revision,
+                 'payload', o.data
+               )
+               ORDER BY o.revision ASC
+             )
+             FROM observation o
+             WHERE o.school_id = ls.school_id AND o.session_id = ls.session_id
+           ),
+           '[]'::jsonb
+         ) AS observations,
+         asm.created_at
        FROM assessment asm
        JOIN attempt att ON att.school_id = asm.school_id AND att.attempt_id = asm.attempt_id
+       JOIN lab_session ls ON ls.school_id = att.school_id AND ls.attempt_id = att.attempt_id
        JOIN experiment_version ev ON ev.experiment_id = att.experiment_id AND ev.content_version = att.content_version
        WHERE asm.school_id = $1 AND att.learner_id = $2 AND asm.supersedes_id IS NULL
        ORDER BY asm.created_at DESC`,
@@ -136,6 +186,7 @@ export default async function StudentDashboardPage() {
     activeSessions: activeRes.rows.map((r) => ({
       sessionId: r.session_id,
       attemptId: r.attempt_id,
+      assignmentId: r.assignment_id,
       experimentId: r.experiment_id,
       contentVersion: r.content_version,
       mode: r.mode,
@@ -155,7 +206,10 @@ export default async function StudentDashboardPage() {
       contentVersion: r.content_version,
       rubricId: r.rubric_id,
       dueAt: r.due_at ? r.due_at.toISOString() : null,
+      isPastDue: Boolean(r.is_past_due),
+      latePolicy: r.late_policy,
       maxAttempts: r.max_attempts,
+      revisionNumber: Number(r.revision_number ?? 1),
       subject: r.subject,
       title: r.title,
       grade: Number(r.grade),
@@ -172,6 +226,10 @@ export default async function StudentDashboardPage() {
     results: resultsRes.rows.map((r) => ({
       assessmentId: r.assessment_id,
       attemptId: r.attempt_id,
+      assignmentId: r.assignment_id,
+      isLate: r.is_late,
+      sessionId: r.session_id,
+      revision: Number(r.revision),
       experimentId: r.experiment_id,
       contentVersion: r.content_version,
       mode: r.mode,
@@ -180,7 +238,9 @@ export default async function StudentDashboardPage() {
       gradeState: r.result.gradeState,
       criteriaPassed: r.result.criteriaPassed ?? 0,
       criteriaTotal: r.result.criteriaTotal ?? 0,
+      criteria: r.result.criteria ?? [],
       evidenceCount: r.result.evidenceIds?.length ?? 0,
+      observations: r.observations ?? [],
       summary: r.result.summary ?? "",
       submittedAt: r.created_at.toISOString(),
     })),

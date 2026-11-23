@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -9,9 +9,11 @@ import {
   CheckCircle2,
   Loader2,
   RefreshCw,
+  WifiOff,
 } from "lucide-react";
 import { LabStageCanvas, type DispatchActionArgs } from "./LabStageCanvas";
-import { apiFetch } from "@/lib/client-api";
+import { apiFetch, generateIdempotencyKey } from "@/lib/client-api";
+import { formatStageLabel } from "@/lib/education-stages";
 import { getDictionary, getExperimentCopy } from "@/lib/i18n";
 import type { LabSessionState } from "@/lib/science-adapters";
 import type {
@@ -49,6 +51,7 @@ export function LabPlayerClient({
   locale,
 }: LabPlayerClientProps) {
   const dict = getDictionary(locale);
+  const isTe = locale === "te-IN";
   const copy = getExperimentCopy(definition.experimentId, locale);
 
   const [session, setSession] = useState<SessionContract>(initialSession);
@@ -68,7 +71,32 @@ export function LabPlayerClient({
   );
 
   const [busy, setBusy] = useState(false);
-  const [feedback, setFeedback] = useState<{ kind: "info" | "error" | "success"; text: string } | null>(null);
+  const [isOffline, setIsOffline] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{
+    args: DispatchActionArgs;
+    idempotencyKey: string;
+  } | null>(null);
+  const [feedback, setFeedback] = useState<{
+    kind: "info" | "error" | "success" | "offline";
+    text: string;
+  } | null>(null);
+
+  useEffect(() => {
+    function handleOffline() {
+      setIsOffline(true);
+    }
+    function handleOnline() {
+      setIsOffline(false);
+    }
+    if (typeof window !== "undefined") {
+      window.addEventListener("offline", handleOffline);
+      window.addEventListener("online", handleOnline);
+      return () => {
+        window.removeEventListener("offline", handleOffline);
+        window.removeEventListener("online", handleOnline);
+      };
+    }
+  }, []);
 
   const isSim = session.mode === "simulation";
   const isSubmitted = session.status === "submitted" || assessment !== null;
@@ -86,18 +114,36 @@ export function LabPlayerClient({
       observations?: ObservationRecord[];
       assessment?: AssessmentSummary | null;
     }>(`/api/v1/sessions/${session.sessionId}?include=full`);
+    if (res.networkError || res.status === 0) {
+      setIsOffline(true);
+      setFeedback({
+        kind: "offline",
+        text: isTe
+          ? `ఆఫ్‌లైన్ / కనెక్షన్ లేదు: చివరిగా నిర్ధారించిన చెక్‌పాయింట్ రివిజన్ #${session.revision} వద్ద సురక్షితంగా ఉంది.`
+          : `Offline / connection unavailable: Last confirmed checkpoint remains at revision #${session.revision}.`,
+      });
+      return false;
+    }
     if (res.ok && res.data.session && res.data.state) {
+      setIsOffline(false);
       setSession(res.data.session);
       setState(res.data.state);
       if (res.data.observations) setObservations(res.data.observations);
       if (res.data.assessment !== undefined) setAssessment(res.data.assessment);
+      return true;
     }
+    return false;
   }
 
-  async function dispatchAction(args: DispatchActionArgs) {
-    if (busy || isSubmitted) return;
+  async function dispatchAction(
+    args: DispatchActionArgs,
+    explicitIdempotencyKey?: string
+  ): Promise<boolean> {
+    if (busy || isSubmitted) return false;
     setBusy(true);
     setFeedback(null);
+
+    const idemKey = explicitIdempotencyKey ?? generateIdempotencyKey("act");
 
     try {
       const payload = {
@@ -119,35 +165,83 @@ export function LabPlayerClient({
         {
           method: "POST",
           body: payload,
+          idempotencyKey: idemKey,
         }
       );
 
+      // W05: Network disconnect / offline handling without unhandled rejection
+      if (res.networkError || res.status === 0) {
+        setIsOffline(true);
+        setPendingAction({ args, idempotencyKey: idemKey });
+        setFeedback({
+          kind: "offline",
+          text: isTe
+            ? `ఆఫ్‌లైన్ / కనెక్షన్ పోయింది: ఈ చర్య ఇంకా సర్వర్‌లో సేవ్ కాలేదు. చివరిగా నిర్ధారించిన రివిజన్ #${session.revision}. నెట్‌వర్క్ తిరిగి వచ్చిన తర్వాత 'మళ్ళీ ప్రయత్నించండి' నొక్కండి.`
+            : `Offline / connection lost: Action was not confirmed by server. Last confirmed checkpoint remains at revision #${session.revision} (unsaved intent pending retry).`,
+        });
+        return false;
+      }
+
+      setIsOffline(false);
+
       if (res.status === 409 && res.data.reasonCode === "REVISION_CONFLICT") {
         // Authoritative conflict recovery: fetch confirmed checkpoint!
+        setPendingAction(null);
         setFeedback({
           kind: "error",
-          text: `Revision conflict (409): server is at revision ${res.data.committedRevision}. Syncing confirmed checkpoint...`,
+          text: isTe
+            ? `రివిజన్ వైరుధ్యం (409): సర్వర్ రివిజన్ ${res.data.committedRevision} వద్ద ఉంది. నిర్ధారించిన చెక్‌పాయింట్‌తో సమకాలీకరిస్తోంది...`
+            : `Revision conflict (409): server is at revision ${res.data.committedRevision}. Syncing confirmed checkpoint...`,
         });
         await syncFromServer();
-        return;
+        return false;
       }
 
       if (!res.ok || !res.data.accepted) {
+        setPendingAction(null);
         setFeedback({
           kind: "error",
-          text: `${res.data.reasonCode || "REJECTED"}: ${res.data.uncertainty?.note || res.data.detail || "Action rejected without mutating session state."}`,
+          text: `${res.data.reasonCode || "REJECTED"}: ${
+            res.data.uncertainty?.note ||
+            res.data.detail ||
+            (isTe
+              ? "సెషన్ స్థితిని మార్చకుండా చర్య తిరస్కరించబడింది."
+              : "Action rejected without mutating session state.")
+          }`,
         });
-        return;
+        return false;
       }
 
       // Refresh authoritative state + checkpoint from PostgreSQL
+      setPendingAction(null);
       await syncFromServer();
       setFeedback({
         kind: "success",
-        text: `Committed at revision ${res.data.committedRevision} (${res.data.reasonCode}).`,
+        text: isTe
+          ? `రివిజన్ ${res.data.committedRevision} వద్ద సర్వర్ నిర్ధారించింది (${res.data.reasonCode}).`
+          : `Committed at revision ${res.data.committedRevision} (${res.data.reasonCode}).`,
       });
+      return true;
+    } catch {
+      setIsOffline(true);
+      setPendingAction({ args, idempotencyKey: idemKey });
+      setFeedback({
+        kind: "offline",
+        text: isTe
+          ? `ఆఫ్‌లైన్ / నెట్‌వర్క్ లోపం: చివరిగా నిర్ధారించిన రివిజన్ #${session.revision} సురక్షితంగా ఉంది.`
+          : `Offline / network error: Last confirmed checkpoint remains at revision #${session.revision}.`,
+      });
+      return false;
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleRetryPendingAction() {
+    if (pendingAction) {
+      await dispatchAction(pendingAction.args, pendingAction.idempotencyKey);
+    } else {
+      await syncFromServer();
     }
   }
 
@@ -169,16 +263,18 @@ export function LabPlayerClient({
           interactionPort: "port_soap_receiver",
         });
       } else if (idx === 2) {
-        await dispatchAction({
+        const ok1 = await dispatchAction({
           targetObjectId: "chem.reaction-tube:1",
           actionType: "identify_reagent",
           choiceId: "Zn",
         });
-        await dispatchAction({
-          targetObjectId: "chem.reaction-tube:1",
-          actionType: "identify_reagent",
-          choiceId: "dilute_H2SO4",
-        });
+        if (ok1) {
+          await dispatchAction({
+            targetObjectId: "chem.reaction-tube:1",
+            actionType: "identify_reagent",
+            choiceId: "dilute_H2SO4",
+          });
+        }
       } else if (idx === 3) {
         await dispatchAction({
           targetObjectId: "chem.reaction-tube:1",
@@ -281,16 +377,18 @@ export function LabPlayerClient({
         },
       });
     } else {
-      await dispatchAction({
+      const ok1 = await dispatchAction({
         targetObjectId: "bio.prepared-onion-slide:1",
         actionType: "select_field",
         parametersWithUnits: { fieldIndex: { value: bioField, unit: "1" } },
       });
-      await dispatchAction({
-        targetObjectId: "bio.compound-microscope:1",
-        actionType: "select_acquired_plane",
-        parametersWithUnits: { fixturePlaneIndex: { value: bioPlane, unit: "1" } },
-      });
+      if (ok1) {
+        await dispatchAction({
+          targetObjectId: "bio.compound-microscope:1",
+          actionType: "select_acquired_plane",
+          parametersWithUnits: { fixturePlaneIndex: { value: bioPlane, unit: "1" } },
+        });
+      }
     }
   }
 
@@ -312,10 +410,23 @@ export function LabPlayerClient({
         }
       );
 
+      if (res.networkError || res.status === 0) {
+        setIsOffline(true);
+        setFeedback({
+          kind: "offline",
+          text: isTe
+            ? `ఆఫ్‌లైన్ / కనెక్షన్ లేదు: సమర్పణ ఇంకా పూర్తి కాలేదు. చివరిగా నిర్ధారించిన రివిజన్ #${session.revision} సురక్షితంగా ఉంది.`
+            : `Offline / connection unavailable: Submission could not reach server. Confirmed revision #${session.revision} is preserved.`,
+        });
+        return;
+      }
+
       if (!res.ok) {
         setFeedback({
           kind: "error",
-          text: res.data.detail || "Unable to submit assessment.",
+          text:
+            res.data.detail ||
+            (isTe ? "మూల్యాంకనాన్ని సమర్పించడం సాధ్యం కాలేదు." : "Unable to submit assessment."),
         });
         return;
       }
@@ -323,7 +434,9 @@ export function LabPlayerClient({
       await syncFromServer();
       setFeedback({
         kind: "success",
-        text: `Assessment submitted and locked (Submission ID ${res.data.submissionId}).`,
+        text: isTe
+          ? `మూల్యాంకనం సమర్పించబడింది మరియు లాక్ చేయబడింది (సమర్పణ ID ${res.data.submissionId}).`
+          : `Assessment submitted and locked (Submission ID ${res.data.submissionId}).`,
       });
     } finally {
       setBusy(false);
@@ -334,33 +447,45 @@ export function LabPlayerClient({
   const primaryTheoryMetric =
     definition.subject === "chemistry"
       ? {
-          label: "Maximum theoretical H₂",
+          label: isTe ? "గరిష్ట సైద్ధాంతిక H₂ పరిమితి" : "Maximum theoretical H₂",
           value:
             state.theoreticalH2Umol !== null && state.theoreticalH2Umol !== undefined
               ? `${state.theoreticalH2Umol} µmol`
-              : "Not computed",
-          note: "For current synthetic test inputs",
+              : isTe
+                ? "ఇంకా గణించలేదు"
+                : "Not computed",
+          note: isTe
+            ? "ప్రస్తుత పరిమిత స్టోయికియోమెట్రీ ఇన్‌పుట్‌లకు"
+            : "For current synthetic stoichiometry inputs",
         }
       : definition.subject === "physics"
         ? {
-            label: "Theoretical transverse offset",
+            label: isTe ? "సైద్ధాంతిక పార్శ్వ విస్థాపనం" : "Theoretical transverse offset",
             value:
               state.transverseOffsetMm !== null && state.transverseOffsetMm !== undefined
                 ? `${state.transverseOffsetMm} mm`
-                : "Not computed",
+                : isTe
+                  ? "ఇంకా గణించలేదు"
+                  : "Not computed",
             note:
               state.refractedAngleDeg !== null && state.refractedAngleDeg !== undefined
-                ? `Refracted angle r = ${state.refractedAngleDeg}° (emergent e = ${state.emergentAngleDeg}°)`
-                : "Ideal Snell geometry (n = 1.500)",
+                ? isTe
+                  ? `వక్రీభవన కోణం r = ${state.refractedAngleDeg}° (నిర్గమ కోణం e = ${state.emergentAngleDeg}°)`
+                  : `Refracted angle r = ${state.refractedAngleDeg}° (emergent e = ${state.emergentAngleDeg}°)`
+                : isTe
+                  ? "ఆదర్శ స్నెల్ జ్యామితి (n = 1.500)"
+                  : "Ideal Snell geometry (n = 1.500)",
           }
         : {
-            label: "Quantitative scale calibration",
-            value: "Unavailable",
-            note: `Qualitative inspection: Field ${state.selectedField ?? 0} · Plane ${state.acquiredPlane ?? 0}`,
+            label: isTe ? "పరిమాణాత్మక స్కేల్ కాలిబ్రేషన్" : "Quantitative scale calibration",
+            value: isTe ? "అందుబాటులో లేదు" : "Unavailable",
+            note: isTe
+              ? `గుణాత్మక పరిశీలన: ఫీల్డ్ ${state.selectedField ?? 0} · ప్లేన్ ${state.acquiredPlane ?? 0}`
+              : `Qualitative inspection: Field ${state.selectedField ?? 0} · Plane ${state.acquiredPlane ?? 0}`,
           };
 
   function formatTrialSummary(trial: Record<string, unknown> | null | undefined): string {
-    if (!trial) return "Not recorded";
+    if (!trial) return isTe ? "నమోదు కాలేదు" : "Not recorded";
     if (definition.subject === "chemistry" && typeof trial.theoreticalH2Umol === "number") {
       return `${trial.theoreticalH2Umol} µmol H₂ (${trial.zincUmol} Zn, ${trial.acidEqUmol} H⁺)`;
     }
@@ -368,45 +493,145 @@ export function LabPlayerClient({
       return `${trial.transverseOffsetMm} mm (i=${trial.incidentAngleDeg}°, d=${trial.slabThicknessMm} mm)`;
     }
     if (definition.subject === "biology") {
-      return `Field ${String(trial.selectedField ?? 0)} · Plane ${String(trial.acquiredPlane ?? 0)} (qualitative)`;
+      return isTe
+        ? `ఫీల్డ్ ${String(trial.selectedField ?? 0)} · ప్లేన్ ${String(trial.acquiredPlane ?? 0)} (గుణాత్మకం)`
+        : `Field ${String(trial.selectedField ?? 0)} · Plane ${String(trial.acquiredPlane ?? 0)} (qualitative)`;
     }
-    return "Recorded";
+    return isTe ? "నమోదు చేయబడింది" : "Recorded";
   }
 
-  return (
-    <main id="main-content" className="mx-auto w-full max-w-[1480px] flex-1 px-4 py-6 sm:px-8 lg:px-10">
-      {/* Top mode & authoritative revision header matching 06 & 07 */}
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <span className={`g1-tag ${isSim ? "g1-tag-blue" : "g1-tag-green"}`}>
-            {isSim ? dict.player.simBadge : dict.player.expBadge}
-          </span>
-          <h1 className="mt-2.5 text-2xl font-extrabold tracking-tight text-[#0c2444] sm:text-[28px]">
-            {isSim
-              ? `${copy.activityLabel} — ${copy.shortTitle}`
-              : `${copy.activityLabel} — ${locale === "te-IN" ? "ఆమోదించిన పరికల్పన పరీక్ష" : "Test a supported hypothesis"}`}
-          </h1>
-        </div>
+  const stageLabel = formatStageLabel(definition.grade, locale);
+  const subjName = dict.subjects[definition.subject].name;
+  const currentStepNumber = Math.min(steps.length, state.stepIndex + 1);
 
-        <div className="text-left sm:text-right">
-          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-            <span className="g1-tag" data-testid="player-status-chip">
-              {isSim
-                ? `Step ${Math.min(steps.length, state.stepIndex + 1)} of ${steps.length}`
-                : copy.modelScopeBadge}
-            </span>
-            <span className="g1-tag font-mono" data-testid="player-revision-badge">
-              {dict.player.savedAtRevision} {session.revision}
-            </span>
-          </div>
-          <p className="mt-1.5 text-xs text-[#4b637a]">
-            {isSim ? `Manifest ${session.manifestSha256.slice(0, 12)}… · ${session.engineAbi}` : copy.modelLimitNote}
-          </p>
+  return (
+    <main id="main-content" className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-5 sm:px-8 lg:px-10">
+      {/* Top Breadcrumb + Authoritative Revision Row matching 03_Simulation_Player_Premium.png */}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border-b border-[#e1ecf3] pb-3">
+        <nav
+          aria-label="Breadcrumb"
+          className="flex flex-wrap items-center gap-2 text-xs font-bold text-[#38546c]"
+        >
+          <Link href="/laboratories" className="hover:text-[#007875] hover:underline">
+            ‹ {dict.nav.laboratories}
+          </Link>
+          <span aria-hidden="true">/</span>
+          <Link
+            href={`/laboratories/${definition.subject}`}
+            className="hover:text-[#007875] hover:underline"
+          >
+            {subjName}
+          </Link>
+          <span aria-hidden="true">/</span>
+          <strong className="text-[#0c2444]">
+            {stageLabel} · {copy.activityLabel}
+          </strong>
+        </nav>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="g1-tag" data-testid="player-status-chip">
+            {isSim
+              ? isTe
+                ? `దశ ${currentStepNumber} / ${steps.length}`
+                : `Step ${currentStepNumber} of ${steps.length}`
+              : copy.modelScopeBadge}
+          </span>
+          <span
+            className={`g1-tag font-mono ${
+              isOffline || pendingAction ? "g1-tag-warn" : "g1-tag-green"
+            }`}
+            data-testid="player-revision-badge"
+          >
+            {isOffline || pendingAction ? "⚠ " : "✓ "}
+            {dict.player.savedAtRevision} {session.revision}
+          </span>
         </div>
       </div>
 
+      {/* Title & Mode Indicator Row matching 03_Simulation_Player_Premium.png */}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div className="g1-eyebrow">
+            {isTe ? "ఇంటరాక్టివ్ ప్రయోగశాల వేదిక" : "INTERACTIVE LEARNING SPACE"}
+          </div>
+          <h1 className="mt-1.5 text-2xl font-extrabold tracking-tight text-[#0c2444] sm:text-[32px]">
+            {isSim
+              ? `${copy.activityLabel} — ${copy.shortTitle}`
+              : `${copy.activityLabel} — ${
+                  isTe ? "ఆమోదించిన పరికల్పన పరీక్ష" : "Test a supported hypothesis"
+                }`}
+          </h1>
+          <p className="mt-1 text-xs font-medium text-[#38546c]">
+            {copy.modelLimitNote} · {stageLabel} · Manifest {session.manifestSha256.slice(0, 12)}…
+          </p>
+        </div>
+
+        {/* Mode indicator deck */}
+        <div
+          aria-label={isTe ? "ప్రస్తుత ప్రయోగ మోడ్" : "Active learning mode"}
+          className="flex items-center gap-2 rounded-2xl border border-[#c5d7e5] bg-[#e6edf4] p-1.5"
+        >
+          <span
+            className={`rounded-xl px-4 py-2.5 text-xs font-extrabold ${
+              isSim
+                ? "bg-[#0663ab] text-white shadow-sm"
+                : "text-[#2c475e]"
+            }`}
+          >
+            ◈ {dict.common.simulation}
+          </span>
+          <span
+            className={`rounded-xl px-4 py-2.5 text-xs font-extrabold ${
+              !isSim
+                ? "bg-[#046c49] text-white shadow-sm"
+                : "text-[#2c475e]"
+            }`}
+          >
+            ⚗ {dict.common.experiment}
+          </span>
+        </div>
+      </div>
+
+      {/* W05: Explicit Offline / Unsaved Intent Banner with Retry */}
+      {(isOffline || pendingAction || feedback?.kind === "offline") && (
+        <div
+          role="alert"
+          data-testid="player-offline-banner"
+          className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#f5d5a3] bg-[#fff4d7] px-4 py-3 text-sm font-semibold text-[#805100]"
+        >
+          <div className="flex items-center gap-2.5">
+            <WifiOff className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>
+              {feedback?.kind === "offline"
+                ? feedback.text
+                : isTe
+                  ? `నెట్‌వర్క్ కనెక్షన్ అందుబాటులో లేదు. చివరిగా నిర్ధారించిన చెక్‌పాయింట్ రివిజన్ #${session.revision} వద్ద సురక్షితంగా ఉంది.`
+                  : `Network disconnected. Your last confirmed server checkpoint remains intact at revision #${session.revision}.`}
+            </span>
+          </div>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void handleRetryPendingAction()}
+            data-testid="player-retry-action-btn"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#805100] bg-white px-3.5 py-1.5 text-xs font-extrabold text-[#805100] hover:bg-[#fffaf0]"
+          >
+            <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>
+              {pendingAction
+                ? isTe
+                  ? "పెండింగ్ చర్యను మళ్ళీ ప్రయత్నించండి"
+                  : "Retry pending action"
+                : isTe
+                  ? "సర్వర్‌తో సమకాలీకరించండి"
+                  : "Reconnect & sync"}
+            </span>
+          </button>
+        </div>
+      )}
+
       {/* Live status / rejection / submitted rubric feedback */}
-      {feedback && (
+      {feedback && feedback.kind !== "offline" && (
         <div
           role={feedback.kind === "error" ? "alert" : "status"}
           data-testid="player-feedback-banner"
@@ -430,7 +655,7 @@ export function LabPlayerClient({
             className="inline-flex items-center gap-1 text-xs underline"
           >
             <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>Sync</span>
+            <span>{isTe ? "సింక్" : "Sync"}</span>
           </button>
         </div>
       )}
@@ -444,12 +669,16 @@ export function LabPlayerClient({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="text-xs font-extrabold uppercase tracking-wider text-[#046c49]">
-                Submitted · Authoritative Server Rubric
+                {isTe
+                  ? "సమర్పించబడింది · అధికారిక సర్వర్ రూబ్రిక్ ఫలితం"
+                  : "Submitted · Authoritative Server Rubric"}
               </div>
               <h2 className="mt-1 text-lg font-extrabold text-[#0c2444]">
                 {assessment.rubricId} — {assessment.gradeState.toUpperCase()}
                 {assessment.criteriaTotal
-                  ? ` (${assessment.criteriaPassed}/${assessment.criteriaTotal} criteria met)`
+                  ? isTe
+                    ? ` (${assessment.criteriaPassed}/${assessment.criteriaTotal} ప్రమాణాలు నెరవేరాయి)`
+                    : ` (${assessment.criteriaPassed}/${assessment.criteriaTotal} criteria met)`
                   : ""}
               </h2>
               {assessment.summary && (
@@ -457,13 +686,13 @@ export function LabPlayerClient({
               )}
             </div>
             <Link href="/student" className="g1-btn g1-btn-green min-h-[40px] text-xs">
-              Return to dashboard →
+              {isTe ? "డాష్‌బోర్డ్‌కు తిరిగి వెళ్ళండి →" : "Return to dashboard →"}
             </Link>
           </div>
         </section>
       )}
 
-      {/* 3-Column Player Workspace matching 06 & 07 */}
+      {/* 3-Column Player Workspace matching 03_Simulation_Player_Premium.png */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         {/* LEFT PANEL */}
         <section
@@ -473,14 +702,16 @@ export function LabPlayerClient({
           {isSim ? (
             <div>
               <div className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0663ab]">
-                {dict.player.currentStep}
+                {dict.player.currentStep} &nbsp; {String(currentStepNumber).padStart(2, "0")} /{" "}
+                {String(steps.length).padStart(2, "0")}
               </div>
               <h2 className="mt-2 text-lg font-extrabold text-[#0c2444]">
                 {steps[Math.min(steps.length - 1, state.stepIndex)]}
               </h2>
               <p className="mt-2 text-xs leading-relaxed text-[#4b637a]">
-                Complete each guided step using the highlighted bench control or the accessible
-                Equipment list.
+                {isTe
+                  ? "వేదికపై ఉన్న హైలైట్ చేసిన నియంత్రణ లేదా అందుబాటులో ఉండే పరికరాల జాబితాను ఉపయోగించి ప్రతి మార్గదర్శక దశను పూర్తి చేయండి."
+                  : "Complete each guided step using the highlighted bench control or the accessible Equipment list."}
               </p>
 
               <hr className="my-4 border-[#dfebf2]" />
@@ -492,15 +723,24 @@ export function LabPlayerClient({
                   return (
                     <li
                       key={label}
-                      className={`flex items-center gap-2.5 rounded-xl px-3 py-2 font-semibold ${
+                      className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 font-semibold ${
                         active
-                          ? "bg-[#e8f3ff] font-extrabold text-[#0663ab]"
+                          ? "bg-[#e4f2ff] font-extrabold text-[#0663ab]"
                           : done
                             ? "text-[#007875]"
                             : "text-[#4b637a]"
                       }`}
                     >
-                      <span aria-hidden="true" className="w-4 text-center font-bold">
+                      <span
+                        aria-hidden="true"
+                        className={`grid h-6 w-6 shrink-0 place-items-center rounded-lg text-xs font-bold ${
+                          active
+                            ? "bg-[#0663ab] text-white shadow-xs"
+                            : done
+                              ? "bg-[#e3f7f4] text-[#007875]"
+                              : "bg-[#eef4f8] text-[#4b637a]"
+                        }`}
+                      >
                         {done ? "✓" : idx + 1}
                       </span>
                       <span>{label}</span>
@@ -510,8 +750,9 @@ export function LabPlayerClient({
               </ol>
 
               <div className="g1-hint mt-5">
-                Use the highlighted control or the accessible Equipment list. Incorrect connections
-                or unsupported reagents show a clear reason without mutating lab state.
+                {isTe
+                  ? "ⓘ హైలైట్ చేసిన పరికరాలు లేదా అందుబాటులో ఉండే పరికరాల జాబితాను ఉపయోగించండి. చెల్లని కనెక్షన్‌లు ప్రయోగ స్థితిని మార్చకుండా కారణాన్ని వివరిస్తాయి."
+                  : "ⓘ Use highlighted apparatus or the accessible Equipment list. Invalid connections or unsupported reagents explain what to correct without mutating lab state."}
               </div>
             </div>
           ) : (
@@ -523,8 +764,9 @@ export function LabPlayerClient({
                 {copy.inquiryQuestion}
               </h2>
               <p className="mt-2 text-xs leading-relaxed text-[#4b637a]">
-                Keep one variable fixed. Change one approved parameter within its admitted domain
-                for comparison.
+                {isTe
+                  ? "ఒక చరరాశిని స్థిరంగా ఉంచండి. పోలిక కోసం ఆమోదించబడిన పరిధిలో మరొక పారామీటర్‌ను మార్చండి."
+                  : "Keep one variable fixed. Change one approved parameter within its admitted domain for comparison."}
               </p>
 
               <hr className="my-4 border-[#dfebf2]" />
@@ -533,14 +775,16 @@ export function LabPlayerClient({
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="var-zinc" className="block text-xs font-bold text-[#133354]">
-                      Zinc amount (µmol · 0–10, step 0.5)
+                      {isTe
+                        ? "జింక్ పరిమాణం (µmol · 0–10, దశ 0.5)"
+                        : "Zinc amount (µmol · 0–10, step 0.5)"}
                     </label>
                     <select
                       id="var-zinc"
                       disabled={isSubmitted}
                       value={zincUmol}
                       onChange={(e) => setZincUmol(Number(e.target.value))}
-                      className="mt-1.5 h-11 w-full rounded-xl border border-[#cde3ee] bg-[#f3f9fb] px-3 text-sm font-semibold text-[#0c2444]"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-[#7894aa] bg-[#f3f9fb] px-3 text-sm font-semibold text-[#0c2444]"
                     >
                       {[0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].map((v) => (
                         <option key={v} value={v}>
@@ -552,14 +796,16 @@ export function LabPlayerClient({
 
                   <div>
                     <label htmlFor="var-acid" className="block text-xs font-bold text-[#133354]">
-                      Acid equivalents (µmol H⁺ eq · 0–10)
+                      {isTe
+                        ? "ఆమ్ల సమానమైన పరిమాణం (µmol H⁺ eq · 0–10)"
+                        : "Acid equivalents (µmol H⁺ eq · 0–10)"}
                     </label>
                     <select
                       id="var-acid"
                       disabled={isSubmitted}
                       value={acidEqUmol}
                       onChange={(e) => setAcidEqUmol(Number(e.target.value))}
-                      className="mt-1.5 h-11 w-full rounded-xl border border-[#cde3ee] bg-[#f3f9fb] px-3 text-sm font-semibold text-[#0c2444]"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-[#7894aa] bg-[#f3f9fb] px-3 text-sm font-semibold text-[#0c2444]"
                     >
                       {[0, 1, 2, 3, 4, 5, 6, 8, 10].map((v) => (
                         <option key={v} value={v}>
@@ -575,14 +821,14 @@ export function LabPlayerClient({
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="var-angle" className="block text-xs font-bold text-[#133354]">
-                      Incident angle (deg · 0–60°)
+                      {isTe ? "పతన కోణం (deg · 0–60°)" : "Incident angle (deg · 0–60°)"}
                     </label>
                     <select
                       id="var-angle"
                       disabled={isSubmitted}
                       value={incidentAngle}
                       onChange={(e) => setIncidentAngle(Number(e.target.value))}
-                      className="mt-1.5 h-11 w-full rounded-xl border border-[#cde3ee] bg-[#f3f9fb] px-3 text-sm font-semibold text-[#0c2444]"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-[#7894aa] bg-[#f3f9fb] px-3 text-sm font-semibold text-[#0c2444]"
                     >
                       {[0, 15, 30, 45, 60].map((v) => (
                         <option key={v} value={v}>
@@ -594,14 +840,14 @@ export function LabPlayerClient({
 
                   <div>
                     <label htmlFor="var-thick" className="block text-xs font-bold text-[#133354]">
-                      Slab thickness (mm · 10–30 mm)
+                      {isTe ? "గాజు దిమ్మె మందం (mm · 10–30 mm)" : "Slab thickness (mm · 10–30 mm)"}
                     </label>
                     <select
                       id="var-thick"
                       disabled={isSubmitted}
                       value={slabThickness}
                       onChange={(e) => setSlabThickness(Number(e.target.value))}
-                      className="mt-1.5 h-11 w-full rounded-xl border border-[#cde3ee] bg-[#f3f9fb] px-3 text-sm font-semibold text-[#0c2444]"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-[#7894aa] bg-[#f3f9fb] px-3 text-sm font-semibold text-[#0c2444]"
                     >
                       {[10, 15, 20, 25, 30].map((v) => (
                         <option key={v} value={v}>
@@ -617,42 +863,55 @@ export function LabPlayerClient({
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="var-field" className="block text-xs font-bold text-[#133354]">
-                      Acquired slide field (0–2)
+                      {isTe ? "స్లైడ్ పరిశీలన ఫీల్డ్ (0–2)" : "Acquired slide field (0–2)"}
                     </label>
                     <select
                       id="var-field"
                       disabled={isSubmitted}
                       value={bioField}
                       onChange={(e) => setBioField(Number(e.target.value))}
-                      className="mt-1.5 h-11 w-full rounded-xl border border-[#cde3ee] bg-[#f3f9fb] px-3 text-sm font-semibold text-[#0c2444]"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-[#7894aa] bg-[#f3f9fb] px-3 text-sm font-semibold text-[#0c2444]"
                     >
-                      <option value={0}>Field 0 — Low-power overview</option>
-                      <option value={1}>Field 1 — Epidermal sheet margin</option>
-                      <option value={2}>Field 2 — Central polygonal walls</option>
+                      <option value={0}>
+                        {isTe ? "ఫీల్డ్ 0 — తక్కువ-శక్తి వీక్షణ" : "Field 0 — Low-power overview"}
+                      </option>
+                      <option value={1}>
+                        {isTe ? "ఫీల్డ్ 1 — బాహ్యచర్మపు అంచు" : "Field 1 — Epidermal sheet margin"}
+                      </option>
+                      <option value={2}>
+                        {isTe ? "ఫీల్డ్ 2 — మధ్య కణ కవచాలు" : "Field 2 — Central polygonal walls"}
+                      </option>
                     </select>
                   </div>
                   <div>
                     <label htmlFor="var-plane" className="block text-xs font-bold text-[#133354]">
-                      Focal plane index (0–2)
+                      {isTe ? "ఫోకల్ ప్లేన్ సూచిక (0–2)" : "Focal plane index (0–2)"}
                     </label>
                     <select
                       id="var-plane"
                       disabled={isSubmitted}
                       value={bioPlane}
                       onChange={(e) => setBioPlane(Number(e.target.value))}
-                      className="mt-1.5 h-11 w-full rounded-xl border border-[#cde3ee] bg-[#f3f9fb] px-3 text-sm font-semibold text-[#0c2444]"
+                      className="mt-1.5 h-11 w-full rounded-xl border border-[#7894aa] bg-[#f3f9fb] px-3 text-sm font-semibold text-[#0c2444]"
                     >
-                      <option value={0}>Plane 0 (Surface)</option>
-                      <option value={1}>Plane 1 (Mid cell wall)</option>
-                      <option value={2}>Plane 2 (Deep plane)</option>
+                      <option value={0}>
+                        {isTe ? "ప్లేన్ 0 (ఉపరితలం)" : "Plane 0 (Surface)"}
+                      </option>
+                      <option value={1}>
+                        {isTe ? "ప్లేన్ 1 (మధ్య కణ కవచం)" : "Plane 1 (Mid cell wall)"}
+                      </option>
+                      <option value={2}>
+                        {isTe ? "ప్లేన్ 2 (లోతైన ప్లేన్)" : "Plane 2 (Deep plane)"}
+                      </option>
                     </select>
                   </div>
                 </div>
               )}
 
               <div className="g1-hint mt-4">
-                Synthetic validation fixture. Unsupported reagents, calibration-missing claims, and
-                kinetics remain outside this model.
+                {isTe
+                  ? "పరిమిత శాస్త్రీయ నమూనా. మద్దతు లేని రసాయనాలు, కాలిబ్రేషన్ లేని కొలతలు మరియు చర్య వేగం ఈ నమూనా పరిధిలో లేవు."
+                  : "Synthetic validation fixture. Unsupported reagents, calibration-missing claims, and kinetics remain outside this model."}
               </div>
 
               <button
@@ -671,14 +930,22 @@ export function LabPlayerClient({
         </section>
 
         {/* CENTER STAGE */}
-        <section aria-label="Laboratory stage" className="lg:col-span-6">
+        <section
+          aria-label={isTe ? "ప్రయోగశాల వేదిక" : "Laboratory stage"}
+          className="lg:col-span-6"
+        >
           <LabStageCanvas
             definition={definition}
             mode={session.mode}
             locale={locale}
             state={state}
+            revision={session.revision}
+            isOffline={isOffline}
+            hasUnsavedIntent={Boolean(pendingAction)}
             disabled={busy || isSubmitted}
-            onDispatch={dispatchAction}
+            onDispatch={async (args) => {
+              await dispatchAction(args);
+            }}
           />
         </section>
 
@@ -690,7 +957,7 @@ export function LabPlayerClient({
           <div>
             <div
               className={`text-[11px] font-extrabold uppercase tracking-[0.14em] ${
-                isSim ? "text-[#4b637a]" : "text-[#046c49]"
+                isSim ? "text-[#057d98]" : "text-[#046c49]"
               }`}
             >
               {isSim ? dict.player.observationNotebook : dict.player.evidenceComparisons}
@@ -714,17 +981,24 @@ export function LabPlayerClient({
                   <div className="mt-1.5 text-xs text-[#426356]">{primaryTheoryMetric.note}</div>
                 </div>
 
+                {/* W09 / G1-23: Confirmed Two-Trial Comparison Table */}
                 <div className="mt-4">
-                  <h3 className="text-xs font-extrabold text-[#0c2444]">Trial comparison</h3>
-                  <dl className="mt-2 divide-y divide-[#e8f0f4] text-xs">
+                  <h3 className="text-xs font-extrabold text-[#0c2444]">
+                    {isTe ? "ట్రయల్ పోలిక పట్టిక" : "Trial comparison"}
+                  </h3>
+                  <dl className="mt-2 divide-y divide-[#e8f0f4] rounded-xl border border-[#dce8f0] bg-[#f8fcff] px-3 text-xs">
                     <div className="flex items-center justify-between gap-2 py-2.5">
-                      <dt className="shrink-0 text-[#4b637a]">Control</dt>
+                      <dt className="shrink-0 font-semibold text-[#4b637a]">
+                        {isTe ? "నియంత్రణ (Control)" : "Control"}
+                      </dt>
                       <dd className="text-right font-bold text-[#0c2444]">
                         {formatTrialSummary(state.controlTrial)}
                       </dd>
                     </div>
                     <div className="flex items-center justify-between gap-2 py-2.5">
-                      <dt className="shrink-0 text-[#4b637a]">Comparison</dt>
+                      <dt className="shrink-0 font-semibold text-[#4b637a]">
+                        {isTe ? "పోలిక (Comparison)" : "Comparison"}
+                      </dt>
                       <dd className="text-right font-bold text-[#0c2444]">
                         {formatTrialSummary(state.comparisonTrial)}
                       </dd>
@@ -734,7 +1008,7 @@ export function LabPlayerClient({
                     type="button"
                     disabled={busy || isSubmitted}
                     onClick={() => void handleRunExperimentTrial(true)}
-                    className="mt-2 inline-flex items-center gap-1 text-xs font-extrabold text-[#046c49] hover:underline disabled:opacity-50"
+                    className="mt-2.5 inline-flex items-center gap-1 text-xs font-extrabold text-[#046c49] hover:underline disabled:opacity-50"
                     data-testid="exp-record-comparison-btn"
                   >
                     <span>{dict.player.recordComparison}</span>
@@ -751,7 +1025,7 @@ export function LabPlayerClient({
             ) : (
               <ul
                 tabIndex={0}
-                aria-label="Confirmed server observations"
+                aria-label={isTe ? "నిర్ధారించిన సర్వర్ పరిశీలనలు" : "Confirmed server observations"}
                 className="max-h-[210px] space-y-2.5 overflow-y-auto rounded-xl text-xs"
                 data-testid="observation-list"
               >
@@ -763,7 +1037,9 @@ export function LabPlayerClient({
                     <div className="font-bold text-[#0c2444]">{obs.metric}</div>
                     <div className="mt-0.5 font-semibold text-[#0663ab]">
                       {obs.value === null
-                        ? "Unavailable"
+                        ? isTe
+                          ? "అందుబాటులో లేదు"
+                          : "Unavailable"
                         : typeof obs.value === "string"
                           ? obs.value
                           : `${obs.value.value} ${obs.value.unit}`}
@@ -777,38 +1053,61 @@ export function LabPlayerClient({
             {/* Claim-Evidence-Reasoning reflection selector */}
             {!isSubmitted && (
               <div className="mt-4">
-                <label htmlFor="claim-select" className="block text-[11px] font-bold uppercase tracking-wider text-[#4b637a]">
-                  Claim &amp; limitation note
+                <label
+                  htmlFor="claim-select"
+                  className="block text-[11px] font-bold uppercase tracking-wider text-[#4b637a]"
+                >
+                  {isTe ? "ముగింపు & పరిమితి నమోదు" : "Claim & limitation note"}
                 </label>
                 <select
                   id="claim-select"
                   value={claimChoice}
                   onChange={(e) => setClaimChoice(e.target.value)}
-                  className="mt-1 h-9 w-full rounded-lg border border-[#cde3ee] bg-white px-2.5 text-xs text-[#0c2444]"
+                  className="mt-1 h-9 w-full rounded-lg border border-[#7894aa] bg-white px-2.5 text-xs text-[#0c2444]"
                 >
                   <option value="supported_model_and_limits_verified">
-                    Observed evidence matches model scope; physical calibration/rate limits noted
+                    {isTe
+                      ? "పరిశీలించిన సాక్ష్యం నమూనా పరిధికి సరిపోతుంది; భౌతిక కాలిబ్రేషన్ పరిమితులు గుర్తించబడ్డాయి"
+                      : "Observed evidence matches model scope; physical calibration/rate limits noted"}
                   </option>
                   <option value="control_and_comparison_explained">
-                    Compared controlled change against baseline with explicit units
+                    {isTe
+                      ? "స్పష్టమైన యూనిట్లతో నియంత్రిత మార్పును బేస్‌లైన్‌తో పోల్చడం జరిగింది"
+                      : "Compared controlled change against baseline with explicit units"}
                   </option>
                 </select>
               </div>
             )}
           </div>
 
-          <div className="mt-5">
-            <div className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#4b637a]">
-              {dict.player.safety}
+          <div className="mt-5 space-y-3 border-t border-[#e5edf3] pt-4">
+            <div>
+              <div className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#057d98]">
+                {dict.player.safety}
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-[#4b637a]">
+                {definition.safetyRules.join(" ")}
+              </p>
             </div>
-            <p className="mt-1.5 text-xs leading-relaxed text-[#4b637a]">
-              {definition.safetyRules.join(" ")}
-            </p>
+            <div>
+              <div className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#057d98]">
+                {isTe ? "తదుపరి దశ ఏమిటి?" : "WHAT HAPPENS NEXT?"}
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-[#4b637a]">
+                {isSim
+                  ? isTe
+                    ? "తదుపరి మార్గదర్శక దశకు వెళ్ళడానికి మీ పరికరాల అమరికను తనిఖీ చేసి, పరిశీలనలను సమర్పించండి."
+                    : "Verify your apparatus setup to advance through each guided step, then submit your confirmed observations."
+                  : isTe
+                    ? "కనీసం ఒక నియంత్రణ మరియు ఒక పోలిక ట్రయల్‌ను నమోదు చేసి, ఆపై మూల్యాంకనం కోసం సమర్పించండి."
+                    : "Record your control and comparison trials, select your conclusion, and submit for rubric evaluation."}
+              </p>
+            </div>
           </div>
         </section>
       </div>
 
-      {/* Bottom Action Bar matching 06 & 07 */}
+      {/* Bottom Action Bar matching 03_Simulation_Player_Premium.png */}
       <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
         <Link
           href={`/experiments/${definition.experimentId}`}

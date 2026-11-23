@@ -10,7 +10,11 @@ import type { ExperimentDefinition } from "@/lib/types";
 export default async function ContentReviewPage() {
   const [auth, locale] = await Promise.all([getCurrentSession(), getRequestLocale()]);
   if (!auth) redirect("/sign-in?next=/content");
-  if (auth.role !== "content_editor" && auth.role !== "content_reviewer" && auth.role !== "state_admin") {
+  if (
+    auth.role !== "content_editor" &&
+    auth.role !== "content_reviewer" &&
+    auth.role !== "state_admin"
+  ) {
     redirect("/");
   }
 
@@ -23,10 +27,24 @@ export default async function ContentReviewPage() {
       definition: ExperimentDefinition;
       published_at: Date | null;
       retired_at: Date | null;
+      linked_attempts: string;
     }>(
-      `SELECT experiment_id, content_version, subject::text, manifest_digest, definition, published_at, retired_at
-       FROM experiment_version
-       ORDER BY experiment_id ASC, content_version DESC`
+      `SELECT
+         ev.experiment_id,
+         ev.content_version,
+         ev.subject::text,
+         ev.manifest_digest,
+         ev.definition,
+         ev.published_at,
+         ev.retired_at,
+         (
+           SELECT count(*)::text
+           FROM attempt a
+           WHERE a.experiment_id = ev.experiment_id
+             AND a.content_version = ev.content_version
+         ) AS linked_attempts
+       FROM experiment_version ev
+       ORDER BY ev.experiment_id ASC, ev.content_version DESC`
     ),
     query<{
       review_id: string;
@@ -36,13 +54,15 @@ export default async function ContentReviewPage() {
       editor_name: string;
       reviewer_name: string | null;
       status: string;
+      checklist: Record<string, boolean>;
       notes: string | null;
       submitted_at: Date;
+      reviewed_at: Date | null;
     }>(
       `SELECT
          er.review_id, er.experiment_id, er.content_version, er.editor_principal_id,
          ed.display_name AS editor_name, rv.display_name AS reviewer_name,
-         er.status, er.notes, er.submitted_at
+         er.status, er.checklist, er.notes, er.submitted_at, er.reviewed_at
        FROM editorial_review er
        JOIN principal_credential ed ON ed.principal_id = er.editor_principal_id
        LEFT JOIN principal_credential rv ON rv.principal_id = er.reviewer_principal_id
@@ -53,18 +73,28 @@ export default async function ContentReviewPage() {
   return (
     <>
       <AppHeader variant="content" locale={locale} auth={auth} />
-      <main id="main-content" className="mx-auto w-full max-w-[1360px] flex-1 px-4 py-9 sm:px-8 lg:px-14">
+      <main
+        id="main-content"
+        className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-9 sm:px-8 lg:px-12"
+      >
         <ContentWorkspaceClient
           role={auth.role}
           principalId={auth.principalId}
+          locale={locale}
           apCorpusSummary={getApCorpusSummary()}
           versions={versionsRes.rows.map((v) => ({
             experimentId: v.experiment_id,
             contentVersion: v.content_version,
             subject: v.subject,
+            grade: v.definition.grade,
             manifestSha256: v.manifest_digest,
             publicationStatus: v.definition.publicationStatus,
             title: v.definition.title,
+            curriculumRefs: (v.definition.curriculumReferences ?? [])
+              .map((r) => `${r.sourceId} (${r.locator})`)
+              .join("; "),
+            modelIds: (v.definition.scienceModelIds ?? []).join(", "),
+            linkedAttempts: Number(v.linked_attempts ?? 0),
             publishedAt: v.published_at ? v.published_at.toISOString() : null,
             retiredAt: v.retired_at ? v.retired_at.toISOString() : null,
           }))}
@@ -76,8 +106,10 @@ export default async function ContentReviewPage() {
             editorName: r.editor_name,
             reviewerName: r.reviewer_name,
             status: r.status,
+            checklist: r.checklist ?? {},
             notes: r.notes,
             submittedAt: r.submitted_at.toISOString(),
+            reviewedAt: r.reviewed_at ? r.reviewed_at.toISOString() : null,
           }))}
         />
       </main>

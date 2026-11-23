@@ -17,25 +17,32 @@ interface TeacherSidebarProps {
 
 export function TeacherSidebar({ active, locale, schoolName }: TeacherSidebarProps) {
   const dict = getDictionary(locale);
+  const isTe = locale === "te-IN";
 
   const linkClass = (isActive: boolean) =>
     `flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-bold transition-colors ${
-      isActive ? "bg-[#e9f8fb] text-[#006d7a]" : "text-[#3f5d75] hover:bg-[#f2f8fc]"
+      isActive
+        ? "bg-gradient-to-r from-[#078f9d] to-[#0e7bb5] text-white shadow-sm"
+        : "text-[#c2dce9] hover:bg-white/10 hover:text-white"
     }`;
 
   return (
     <aside
       aria-label={dict.teacher.sidebarHeading}
-      className="border-b border-[#dfebf3] bg-white px-4 py-5 lg:w-[248px] lg:shrink-0 lg:border-b-0 lg:border-r"
+      className="border-b border-[#1c3d5e] bg-gradient-to-b from-[#0c2742] to-[#103052] px-4 py-5 text-white lg:w-[244px] lg:shrink-0 lg:border-b-0 lg:border-r"
     >
-      <div className="px-3 pb-4">
-        <div className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#007875]">
-          {dict.teacher.workspaceEyebrow}
-        </div>
-        <h2 className="mt-2 text-lg font-extrabold text-[#0c2444]">
+      <div className="px-2 pb-4">
+        <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#7ed6cf]">
           {dict.teacher.sidebarHeading}
-        </h2>
-        {schoolName && <p className="mt-1 text-xs text-[#4b637a]">{schoolName}</p>}
+        </div>
+        <div className="mt-3 rounded-2xl border border-white/15 bg-white/10 p-3.5">
+          <div className="text-[11px] font-semibold text-[#b3cedf]">
+            {isTe ? "ప్రస్తుత పాఠశాల పరిధి" : "Current scope"}
+          </div>
+          <div className="mt-0.5 truncate text-sm font-extrabold text-white">
+            {schoolName || (isTe ? "G1 పాఠశాల" : "G1 Partner School")}
+          </div>
+        </div>
       </div>
 
       <nav aria-label="Teacher sections" className="flex flex-wrap gap-1.5 lg:flex-col">

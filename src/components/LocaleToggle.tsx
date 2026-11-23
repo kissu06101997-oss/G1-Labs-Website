@@ -35,16 +35,21 @@ export function LocaleToggle({ locale }: LocaleToggleProps) {
       type="button"
       onClick={handleToggle}
       disabled={busy}
-      className="inline-flex min-h-[40px] items-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 py-1.5 text-xs font-semibold text-[#1f3d59] transition-colors hover:bg-[#eef6fb] sm:px-3 sm:text-sm"
+      className="inline-flex min-h-[40px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl border border-[#c3d7e5] bg-white px-2.5 py-1.5 text-xs font-bold text-[#1f3d59] transition-colors hover:bg-[#eef6fb] lg:px-3.5 lg:text-sm"
       aria-label={
         locale === "en-IN"
-          ? "Switch language to Telugu (తెలుగు)"
-          : "Switch language to English"
+          ? "English / తెలుగు — Switch language to Telugu"
+          : "తెలుగు / English — Switch language to English"
       }
       data-testid="locale-toggle"
     >
-      <Globe className="h-4 w-4 text-[#007875]" aria-hidden="true" />
-      <span>{locale === "en-IN" ? "English / తెలుగు" : "తెలుగు / English"}</span>
+      <Globe className="h-4 w-4 shrink-0 text-[#007875]" aria-hidden="true" />
+      <span className="hidden sm:inline">
+        {locale === "en-IN" ? "English / తెలుగు" : "తెలుగు / English"}
+      </span>
+      <span className="sm:hidden">
+        {locale === "en-IN" ? "తెలుగు" : "English"}
+      </span>
     </button>
   );
 }

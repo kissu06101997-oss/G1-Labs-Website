@@ -134,6 +134,7 @@ export async function POST(req: NextRequest) {
 
     // 3. Resolve learner pseudonym within school scope (or teacher preview slot for unassigned preview)
     let learnerId = auth.learnerId;
+    const isPreview = auth.role === "teacher";
     if (!learnerId && auth.role === "teacher") {
       if (input.assignmentId) {
         return {
@@ -167,16 +168,20 @@ export async function POST(req: NextRequest) {
       };
     }
 
-    // 4. Validate assignment scope if assignmentId is supplied
+    // 4. Validate assignment scope if assignmentId is supplied (W01 + W02)
     let classId: string | null = null;
+    let isLate = false;
     if (input.assignmentId) {
       const assignRes = await client.query<{
         class_id: string;
         experiment_id: string;
         content_version: string;
         max_attempts: number;
+        due_at: Date | null;
+        late_policy: string;
       }>(
-        `SELECT a.class_id, a.experiment_id, a.content_version, a.max_attempts
+        `SELECT a.class_id, a.experiment_id, a.content_version, a.max_attempts, a.due_at,
+                COALESCE(a.late_policy, 'allow_late_flagged') AS late_policy
          FROM assignment a
          JOIN enrollment e
            ON e.school_id = a.school_id
@@ -213,6 +218,19 @@ export async function POST(req: NextRequest) {
         };
       }
 
+      if (assignRow.due_at && new Date(assignRow.due_at).getTime() < Date.now()) {
+        if (assignRow.late_policy === "block_new_after_due") {
+          return {
+            status: 409,
+            error: {
+              reasonCode: "STATE_CONFLICT" as const,
+              detail: "Assignment due time (Asia/Kolkata) has passed and late launches are locked by class policy.",
+            },
+          };
+        }
+        isLate = true;
+      }
+
       const countRes = await client.query<{ cnt: string }>(
         `SELECT count(*)::text AS cnt
          FROM attempt
@@ -235,8 +253,8 @@ export async function POST(req: NextRequest) {
     const attemptId = newUuid();
     await client.query(
       `INSERT INTO attempt
-        (school_id, attempt_id, learner_id, assignment_id, class_id, experiment_id, content_version, mode, locale, opened_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8::lab_mode, $9, now())`,
+        (school_id, attempt_id, learner_id, assignment_id, class_id, experiment_id, content_version, mode, locale, opened_at, is_preview, is_late)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8::lab_mode, $9, now(), $10, $11)`,
       [
         auth.schoolId,
         attemptId,
@@ -247,6 +265,8 @@ export async function POST(req: NextRequest) {
         input.contentVersion,
         input.mode,
         input.locale,
+        isPreview,
+        isLate,
       ]
     );
 
@@ -272,6 +292,8 @@ export async function POST(req: NextRequest) {
       engineAbi: expRow.abi,
       expiresAt: expiresAt.toISOString(),
       locale: input.locale,
+      isPreview,
+      isLate,
     };
 
     await client.query(
@@ -283,7 +305,7 @@ export async function POST(req: NextRequest) {
     await recordAuditEvent(
       {
         schoolId: auth.schoolId,
-        actionType: "lab.launch_issued",
+        actionType: isPreview ? "lab.teacher_preview_issued" : "lab.launch_issued",
         actorId: auth.principalId,
         subjectKey: attemptId,
       },

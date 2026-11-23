@@ -24,10 +24,17 @@ export default async function AdminPage() {
 
   const allowed = new Set(["school_admin", "district_admin", "state_admin", "operator"]);
   if (!allowed.has(auth.role)) {
-    redirect(auth.role === "student" ? "/student" : auth.role === "teacher" ? "/teacher" : "/content");
+    redirect(
+      auth.role === "student"
+        ? "/student"
+        : auth.role === "teacher"
+          ? "/teacher"
+          : "/content"
+    );
   }
 
   let data: SchoolAdminData | AggregateAdminData;
+  const generatedAt = new Date().toISOString();
 
   if (auth.role === "school_admin" && auth.schoolId) {
     const [roster, devices, audits] = await Promise.all([
@@ -75,6 +82,7 @@ export default async function AdminPage() {
     data = {
       scope: "school",
       schoolName: auth.schoolName,
+      generatedAt,
       roster: roster.rows.map((r) => ({
         principalId: r.principal_id,
         email: r.email,
@@ -125,8 +133,12 @@ export default async function AdminPage() {
     data = {
       scope: auth.role === "district_admin" ? "district" : "state",
       districtName: auth.districtName,
+      generatedAt,
       suppressionThreshold: SMALL_CELL_THRESHOLD,
-      note: "Aggregated synthetic pilot telemetry only. Individual student identities are never exposed.",
+      note:
+        locale === "te-IN"
+          ? "సమీకరించిన సింథటిక్ పైలట్ గణాంకాలు మాత్రమే. వ్యక్తిగత విద్యార్థుల గుర్తింపు ఎప్పుడూ బహిర్గతం చేయబడదు."
+          : "Aggregated synthetic pilot telemetry only. Individual student identities are never exposed.",
       schools: aggRes.rows.map((r) => ({
         schoolCode: r.school_code,
         schoolName: r.school_name,
@@ -141,8 +153,15 @@ export default async function AdminPage() {
   return (
     <>
       <AppHeader variant="admin" locale={locale} auth={auth} />
-      <main id="main-content" className="mx-auto w-full max-w-[1360px] flex-1 px-4 py-9 sm:px-8 lg:px-14">
-        <AdminWorkspaceClient data={data} currentPrincipalId={auth.principalId} />
+      <main
+        id="main-content"
+        className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-9 sm:px-8 lg:px-12"
+      >
+        <AdminWorkspaceClient
+          data={data}
+          currentPrincipalId={auth.principalId}
+          locale={locale}
+        />
       </main>
       <AppFooter locale={locale} />
     </>

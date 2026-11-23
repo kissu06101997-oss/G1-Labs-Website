@@ -10,7 +10,7 @@ export const SESSION_COOKIE_NAME = "g1_session";
 export const CSRF_COOKIE_NAME = "g1_csrf";
 export const LOCALE_COOKIE_NAME = "g1_locale";
 
-// In-memory sliding-window auth rate limiter (10 attempts / 15 min per key)
+// In-memory sliding-window auth rate limiter (20 attempts / 15 min per key)
 // Note: documented for single local node; multi-instance production requires shared Redis/DB store.
 const AUTH_RATE_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_RATE_MAX = 20;
@@ -45,7 +45,12 @@ export function apiError(
       requestId: newUuid(),
       detail,
     },
-    { status }
+    {
+      status,
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    }
   );
 }
 
@@ -60,6 +65,7 @@ export async function getCurrentSession(): Promise<AuthContext | null> {
   const rawToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   if (!rawToken || rawToken.length < 16) return null;
 
+  const allowSynthetic = process.env.ALLOW_LOCAL_SYNTHETIC_FIXTURES === "true";
   const tokenHash = hmacToken(rawToken);
   const res = await query<{
     principal_id: string;
@@ -101,12 +107,26 @@ export async function getCurrentSession(): Promise<AuthContext | null> {
        AND s.revoked_at IS NULL
        AND s.expires_at > now()
        AND p.enabled = true
+       AND EXISTS (
+         SELECT 1 FROM role_grant rg
+         WHERE rg.principal_id = s.principal_id
+           AND rg.role = s.active_role
+           AND rg.revoked_at IS NULL
+           AND COALESCE(rg.school_id, '00000000-0000-0000-0000-000000000000'::uuid) =
+               COALESCE(s.active_school_id, '00000000-0000-0000-0000-000000000000'::uuid)
+       )
      LIMIT 1`,
     [tokenHash]
   );
 
   const row = res.rows[0];
   if (!row) return null;
+
+  // W04: Reject synthetic sessions if ALLOW_LOCAL_SYNTHETIC_FIXTURES is not enabled
+  if (row.is_synthetic && !allowSynthetic) return null;
+
+  // W04: If active role is student, require an active school_learner record
+  if (row.active_role === "student" && !row.learner_id) return null;
 
   return {
     principalId: row.principal_id,

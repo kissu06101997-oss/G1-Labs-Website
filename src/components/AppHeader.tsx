@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, Menu, X } from "lucide-react";
@@ -31,8 +31,23 @@ export function AppHeader({
   const pathname = usePathname();
   const router = useRouter();
   const dict = getDictionary(locale);
+  const isTe = locale === "te-IN";
   const [mobileOpen, setMobileOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const menuBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  // W13: Close mobile drawer on Escape key and return focus to toggle button
+  useEffect(() => {
+    if (!mobileOpen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        menuBtnRef.current?.focus();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileOpen]);
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -56,40 +71,50 @@ export function AppHeader({
 
   const roleBadgeLabel =
     auth?.role === "student"
-      ? locale === "te-IN"
+      ? isTe
         ? "విద్యార్థి ఖాతా"
-        : "Student account"
+        : "Student"
       : auth?.role === "teacher"
-        ? locale === "te-IN"
+        ? isTe
           ? "ఉపాధ్యాయ ఖాతా"
-          : "Teacher account"
+          : "Teacher"
         : auth?.role === "content_editor"
-          ? "Content editor"
+          ? isTe
+            ? "ఎడిటర్"
+            : "Editor"
           : auth?.role === "content_reviewer"
-            ? "Content reviewer"
+            ? isTe
+              ? "సమీక్షకుడు"
+              : "Reviewer"
             : auth?.role === "district_admin"
-              ? "District admin"
+              ? isTe
+                ? "జిల్లా అడ్మిన్"
+                : "District admin"
               : auth?.role === "state_admin"
-                ? "State admin"
-                : "School admin";
+                ? isTe
+                  ? "రాష్ట్ర అడ్మిన్"
+                  : "State admin"
+                : isTe
+                  ? "పాఠశాల అడ్మిన్"
+                  : "School admin";
 
   if (variant === "player") {
     return (
-      <header className="sticky top-0 z-30 border-b border-[#e6f0f6] bg-white/95 backdrop-blur-sm">
-        <div className="mx-auto flex h-[72px] max-w-[1480px] items-center justify-between gap-4 px-4 sm:px-8 lg:px-12">
-          <div className="flex items-center gap-6">
+      <header className="sticky top-0 z-30 border-b border-[#d9e7f0] bg-white/95 backdrop-blur-sm">
+        <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-10">
+          <div className="flex min-w-0 items-center gap-4">
             <BrandLogo href={auth ? workspaceHref : "/"} compact />
             {playerMeta?.subtitle && (
-              <span className="hidden text-sm font-semibold text-[#4b637a] sm:inline">
+              <span className="hidden truncate text-sm font-semibold text-[#4b637a] md:inline">
                 {playerMeta.subtitle}
               </span>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <LocaleToggle locale={locale} />
             <Link
               href={playerMeta?.exitHref ?? (auth ? workspaceHref : "/laboratories")}
-              className="g1-btn g1-btn-outline min-h-[40px] px-4 text-sm"
+              className="g1-btn g1-btn-outline min-h-[40px] whitespace-nowrap px-3.5 text-xs sm:px-4 sm:text-sm"
             >
               {dict.nav.exitLab}
             </Link>
@@ -129,20 +154,29 @@ export function AppHeader({
         : variant === "admin"
           ? [
               { href: "/admin", label: dict.nav.admin, active: pathname === "/admin" },
-              { href: "/laboratories", label: dict.nav.laboratories, active: pathname.startsWith("/laboratories") },
+              {
+                href: "/laboratories",
+                label: dict.nav.laboratories,
+                active: pathname.startsWith("/laboratories"),
+              },
               { href: "/help", label: dict.nav.help, active: pathname === "/help" },
             ]
           : variant === "content"
             ? [
                 { href: "/content", label: dict.nav.content, active: pathname === "/content" },
-                { href: "/laboratories", label: dict.nav.laboratories, active: pathname.startsWith("/laboratories") },
+                {
+                  href: "/laboratories",
+                  label: dict.nav.laboratories,
+                  active: pathname.startsWith("/laboratories"),
+                },
                 { href: "/help", label: dict.nav.help, active: pathname === "/help" },
               ]
             : [
                 {
                   href: "/laboratories",
                   label: dict.nav.laboratories,
-                  active: pathname.startsWith("/laboratories") || pathname.startsWith("/experiments"),
+                  active:
+                    pathname.startsWith("/laboratories") || pathname.startsWith("/experiments"),
                 },
                 {
                   href: auth?.role === "teacher" ? "/teacher" : "/sign-in?role=teacher",
@@ -153,17 +187,20 @@ export function AppHeader({
               ];
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[#e6f0f6] bg-white/95 backdrop-blur-sm">
-      <div className="mx-auto flex h-[78px] max-w-[1480px] items-center justify-between gap-4 px-4 sm:px-8 lg:px-14">
+    <header className="sticky top-0 z-30 border-b border-[#ddeaf2] bg-white/96 backdrop-blur-sm">
+      <div className="mx-auto flex h-[76px] max-w-[1440px] items-center justify-between gap-2 px-3 sm:px-5 lg:gap-5 lg:px-12">
         <BrandLogo href="/" />
 
-        {/* Desktop navigation */}
-        <nav aria-label="Primary navigation" className="hidden items-center gap-7 md:flex">
+        {/* Desktop & Tablet navigation — calibrated so 768px NEVER clips Sign in (W07) */}
+        <nav
+          aria-label="Primary navigation"
+          className="hidden min-w-0 items-center gap-2 md:flex lg:gap-7"
+        >
           {navItems.map((item) => (
             <Link
               key={item.href + item.label}
               href={item.href}
-              className={`whitespace-nowrap rounded-lg px-2 py-1.5 text-sm font-bold transition-colors ${
+              className={`whitespace-nowrap rounded-lg px-2 py-1.5 text-xs font-bold transition-colors lg:text-sm ${
                 item.active
                   ? "text-[#007875]"
                   : "text-[#233c56] hover:text-[#007875]"
@@ -175,13 +212,13 @@ export function AppHeader({
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden shrink-0 items-center gap-2 md:flex lg:gap-3">
           <LocaleToggle locale={locale} />
           {auth ? (
             <div className="flex items-center gap-2">
               <Link
                 href={workspaceHref}
-                className="inline-flex min-h-[40px] items-center rounded-2xl bg-[#e5f7fb] px-3.5 py-1.5 text-xs font-extrabold tracking-wide text-[#0b6878] transition-colors hover:bg-[#d7f1f8]"
+                className="inline-flex min-h-[40px] items-center whitespace-nowrap rounded-xl bg-[#e5f7fb] px-3 py-1.5 text-xs font-extrabold tracking-wide text-[#0b6878] transition-colors hover:bg-[#d7f1f8]"
               >
                 {roleBadgeLabel}
               </Link>
@@ -189,7 +226,7 @@ export function AppHeader({
                 type="button"
                 onClick={handleSignOut}
                 disabled={signingOut}
-                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-[#c3d7e5] bg-white px-3 text-xs font-bold text-[#214362] hover:bg-[#f5faff]"
+                className="inline-flex min-h-[40px] items-center gap-1.5 whitespace-nowrap rounded-xl border border-[#7894aa] bg-white px-2.5 text-xs font-bold text-[#0c2444] hover:bg-[#f5faff] lg:px-3"
                 aria-label={dict.nav.signOut}
               >
                 <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
@@ -199,7 +236,8 @@ export function AppHeader({
           ) : (
             <Link
               href="/sign-in"
-              className="g1-btn g1-btn-outline min-h-[41px] whitespace-nowrap px-5 text-sm"
+              data-testid="header-signin-link"
+              className="g1-btn g1-btn-outline min-h-[40px] whitespace-nowrap px-3.5 text-xs lg:px-5 lg:text-sm"
             >
               {dict.nav.signIn}
             </Link>
@@ -207,29 +245,45 @@ export function AppHeader({
         </div>
 
         {/* Mobile menu trigger */}
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="flex shrink-0 items-center gap-1.5 md:hidden">
           <LocaleToggle locale={locale} />
           <button
+            ref={menuBtnRef}
             type="button"
             onClick={() => setMobileOpen((v) => !v)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#c3d7e5] bg-white text-[#0c2444]"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#7894aa] bg-white text-[#0c2444]"
             aria-expanded={mobileOpen}
-            aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-controls="g1-mobile-nav-drawer"
+            aria-label={
+              mobileOpen
+                ? isTe
+                  ? "నావిగేషన్ మెనూ మూసివేయి"
+                  : "Close navigation menu"
+                : isTe
+                  ? "నావిగేషన్ మెనూ తెరువు"
+                  : "Open navigation menu"
+            }
+            data-testid="mobile-menu-toggle"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer (W13: Escape closes, aria-current matches desktop) */}
       {mobileOpen && (
-        <div className="border-t border-[#e6f0f6] bg-white px-4 py-4 md:hidden">
+        <div
+          id="g1-mobile-nav-drawer"
+          data-testid="mobile-nav-drawer"
+          className="border-t border-[#e6f0f6] bg-white px-4 py-4 shadow-md md:hidden"
+        >
           <nav aria-label="Mobile navigation" className="flex flex-col gap-2">
             {navItems.map((item) => (
               <Link
                 key={item.href + item.label}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
+                aria-current={item.active ? "page" : undefined}
                 className={`rounded-xl px-3.5 py-2.5 text-sm font-bold ${
                   item.active ? "bg-[#e9f8fb] text-[#007875]" : "text-[#233c56]"
                 }`}

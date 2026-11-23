@@ -2,14 +2,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppFooter } from "@/components/AppFooter";
 import { AppHeader } from "@/components/AppHeader";
-import { ModeLauncher } from "@/components/ModeLauncher";
+import { ModeLauncher, type ResolvedAssignmentContext } from "@/components/ModeLauncher";
 import { getCurrentSession, getRequestLocale } from "@/lib/auth";
 import { getExperimentById } from "@/lib/catalog";
+import { query } from "@/lib/db";
+import { formatStageLabel } from "@/lib/education-stages";
 import { getDictionary, getExperimentCopy } from "@/lib/i18n";
+import type { LabMode } from "@/lib/types";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default async function ExperimentDetailPage(props: {
   params: Promise<{ experimentId: string }>;
-  searchParams: Promise<{ assignmentId?: string }>;
+  searchParams: Promise<{ assignmentId?: string; version?: string }>;
 }) {
   const [{ experimentId }, auth, locale, sp] = await Promise.all([
     props.params,
@@ -18,22 +23,147 @@ export default async function ExperimentDetailPage(props: {
     props.searchParams,
   ]);
 
-  const exp = await getExperimentById(experimentId);
+  let assignmentContext: ResolvedAssignmentContext | null = null;
+  let allowedModes: LabMode[] | undefined = undefined;
+  let assignmentAccessDenied = false;
+  let pinnedVersion: string | undefined = sp.version;
+
+  // W01: Resolve assigned modes, pinned contentVersion, attempt quota and due policy server-side
+  if (sp.assignmentId) {
+    if (!UUID_RE.test(sp.assignmentId)) {
+      assignmentAccessDenied = true;
+    } else if (auth?.role === "student" && auth.schoolId && auth.learnerId) {
+      const assignRes = await query<{
+        assignment_id: string;
+        class_label: string;
+        experiment_id: string;
+        content_version: string;
+        rubric_id: string;
+        due_at: Date | null;
+        is_past_due: boolean;
+        late_policy: "allow_late_flagged" | "block_new_after_due";
+        max_attempts: number;
+        revision_number: number;
+        modes: LabMode[];
+        mode_rubrics: Array<{ mode: LabMode; rubric_id: string | null }>;
+        used_attempts: string;
+        active_session_id: string | null;
+        active_session_mode: LabMode | null;
+      }>(
+        `SELECT
+           a.assignment_id,
+           cl.label AS class_label,
+           a.experiment_id,
+           a.content_version,
+           a.rubric_id,
+           a.due_at,
+           (a.due_at IS NOT NULL AND a.due_at < now()) AS is_past_due,
+           COALESCE(a.late_policy, 'allow_late_flagged') AS late_policy,
+           a.max_attempts,
+           COALESCE(a.revision_number, 1) AS revision_number,
+           ARRAY_AGG(DISTINCT am.mode::text ORDER BY am.mode::text) AS modes,
+           JSONB_AGG(JSONB_BUILD_OBJECT('mode', am.mode::text, 'rubric_id', am.rubric_id)) AS mode_rubrics,
+           (
+             SELECT count(*)::text
+             FROM attempt att
+             WHERE att.school_id = a.school_id
+               AND att.assignment_id = a.assignment_id
+               AND att.learner_id = $3
+               AND att.submitted_at IS NOT NULL
+           ) AS used_attempts,
+           (
+             SELECT ls.session_id
+             FROM attempt att
+             JOIN lab_session ls ON ls.school_id = att.school_id AND ls.attempt_id = att.attempt_id
+             WHERE att.school_id = a.school_id
+               AND att.assignment_id = a.assignment_id
+               AND att.learner_id = $3
+               AND ls.status IN ('active', 'paused')
+             ORDER BY ls.saved_at DESC
+             LIMIT 1
+           ) AS active_session_id,
+           (
+             SELECT att.mode::text
+             FROM attempt att
+             JOIN lab_session ls ON ls.school_id = att.school_id AND ls.attempt_id = att.attempt_id
+             WHERE att.school_id = a.school_id
+               AND att.assignment_id = a.assignment_id
+               AND att.learner_id = $3
+               AND ls.status IN ('active', 'paused')
+             ORDER BY ls.saved_at DESC
+             LIMIT 1
+           ) AS active_session_mode
+         FROM assignment a
+         JOIN classroom cl
+           ON cl.school_id = a.school_id
+          AND cl.class_id = a.class_id
+         JOIN enrollment e
+           ON e.school_id = a.school_id
+          AND e.class_id = a.class_id
+          AND e.learner_id = $3
+          AND e.withdrawn_at IS NULL
+         JOIN assignment_mode am
+           ON am.school_id = a.school_id
+          AND am.assignment_id = a.assignment_id
+         WHERE a.school_id = $1
+           AND a.assignment_id = $2
+           AND a.experiment_id = $4
+         GROUP BY a.school_id, a.assignment_id, cl.label`,
+        [auth.schoolId, sp.assignmentId, auth.learnerId, experimentId]
+      );
+
+      const row = assignRes.rows[0];
+      if (!row) {
+        assignmentAccessDenied = true;
+      } else {
+        pinnedVersion = row.content_version;
+        allowedModes = row.modes;
+        const rubricByMode: Partial<Record<LabMode, string>> = {};
+        for (const mr of row.mode_rubrics ?? []) {
+          rubricByMode[mr.mode] = mr.rubric_id || row.rubric_id;
+        }
+        assignmentContext = {
+          assignmentId: row.assignment_id,
+          classLabel: row.class_label,
+          contentVersion: row.content_version,
+          dueAt: row.due_at ? row.due_at.toISOString() : null,
+          isPastDue: Boolean(row.is_past_due),
+          latePolicy: row.late_policy,
+          maxAttempts: row.max_attempts,
+          usedAttempts: Number(row.used_attempts ?? 0),
+          activeSessionId: row.active_session_id,
+          activeSessionMode: row.active_session_mode,
+          rubricByMode,
+          revisionNumber: Number(row.revision_number ?? 1),
+        };
+      }
+    }
+  }
+
+  const exp = await getExperimentById(experimentId, pinnedVersion);
   if (!exp) {
     notFound();
   }
 
   const dict = getDictionary(locale);
+  const isTe = locale === "te-IN";
   const copy = getExperimentCopy(exp.experimentId, locale);
   const subjName = dict.subjects[exp.subject].name;
+  const stageLabel = formatStageLabel(exp.grade, locale);
   const courseBadge =
-    exp.subject === "biology" ? "AP Biological Science" : "AP Physical Science";
+    exp.subject === "biology"
+      ? isTe
+        ? "AP జీవ శాస్త్రం (SCERT)"
+        : "AP Biological Science"
+      : isTe
+        ? "AP భౌతిక రసాయన శాస్త్రం (SCERT)"
+        : "AP Physical Science";
 
   return (
     <>
       <AppHeader variant="public" locale={locale} auth={auth} />
 
-      <main id="main-content" className="mx-auto w-full max-w-[1480px] flex-1 px-4 pb-14 pt-7 sm:px-8 lg:px-14">
+      <main id="main-content" className="mx-auto w-full max-w-[1440px] flex-1 px-4 pb-14 pt-7 sm:px-8 lg:px-12">
         {/* Breadcrumb */}
         <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[#4b637a]">
           <Link href="/laboratories" className="hover:text-[#007875] hover:underline">
@@ -44,6 +174,10 @@ export default async function ExperimentDetailPage(props: {
             {subjName}
           </Link>
           <span aria-hidden="true">›</span>
+          <Link href={`/laboratories?grade=${exp.grade}`} className="hover:text-[#007875] hover:underline">
+            {stageLabel}
+          </Link>
+          <span aria-hidden="true">›</span>
           <span className="text-[#0c2444]">{copy.activityLabel}</span>
         </nav>
 
@@ -51,7 +185,7 @@ export default async function ExperimentDetailPage(props: {
         <section className="mt-5 grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
           <div className="lg:col-span-5">
             <div className="g1-eyebrow">
-              {dict.common.classWord} {exp.grade} · {subjName}
+              {stageLabel} · {subjName}
             </div>
             <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-[#0c2444] sm:text-[41px] sm:leading-[1.12]">
               {copy.title}
@@ -63,7 +197,18 @@ export default async function ExperimentDetailPage(props: {
             <div className="mt-5 flex flex-wrap gap-2">
               <span className="g1-tag">{courseBadge}</span>
               <span className="g1-tag">{dict.detail.editionPendingBadge}</span>
-              <span className="g1-tag">v{exp.contentVersion}</span>
+              <span className="g1-tag" data-testid="detail-version-tag">
+                v{exp.contentVersion}
+              </span>
+              {exp.publicationStatus === "review_pending" ? (
+                <span className="g1-tag g1-tag-warn">
+                  {isTe ? "పాఠ్యప్రణాళిక సమీక్ష పెండింగ్" : "Curriculum review pending"}
+                </span>
+              ) : (
+                <span className="g1-tag g1-tag-green">
+                  {isTe ? "ప్రారంభించగల తటస్థ ప్రయోగం" : "Launchable neutral practical"}
+                </span>
+              )}
             </div>
 
             <div className="g1-hint mt-5">
@@ -79,7 +224,7 @@ export default async function ExperimentDetailPage(props: {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={copy.imagePath}
-                alt={`${copy.title} — apparatus concept diagram (not to scale)`}
+                alt={`${copy.title} — ${isTe ? "పరికరాల నమూనా చిత్రం (కొలతకు కాదు)" : "apparatus concept diagram (not to scale)"}`}
                 className="h-full w-full rounded-2xl object-contain"
               />
             </div>
@@ -97,12 +242,16 @@ export default async function ExperimentDetailPage(props: {
           locale={locale}
           isSignedIn={Boolean(auth)}
           canLaunch={auth?.role === "student" || auth?.role === "teacher"}
+          isTeacherPreview={auth?.role === "teacher"}
           assignmentId={sp.assignmentId ?? null}
+          allowedModes={allowedModes}
+          assignmentContext={assignmentContext}
+          assignmentAccessDenied={assignmentAccessDenied}
         />
 
         {/* Bottom 3-column summary card matching 03_Experiment_Detail.png */}
         <section
-          aria-label="Experiment summary"
+          aria-label={isTe ? "ప్రయోగ సారాంశం" : "Experiment summary"}
           className="g1-card mt-6 grid grid-cols-1 gap-6 p-6 md:grid-cols-3"
         >
           <div>
@@ -132,21 +281,29 @@ export default async function ExperimentDetailPage(props: {
           </summary>
           <dl className="mt-4 grid grid-cols-1 gap-4 text-xs sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <dt className="font-bold text-[#4b637a]">Experiment ID</dt>
+              <dt className="font-bold text-[#4b637a]">
+                {isTe ? "ప్రయోగ ID" : "Experiment ID"}
+              </dt>
               <dd className="mt-1 font-mono text-[#0c2444]">{exp.experimentId}</dd>
             </div>
             <div>
-              <dt className="font-bold text-[#4b637a]">Science Model ID</dt>
+              <dt className="font-bold text-[#4b637a]">
+                {isTe ? "శాస్త్రీయ నమూనా ID" : "Science Model ID"}
+              </dt>
               <dd className="mt-1 font-mono text-[#0c2444]">{exp.scienceModelIds.join(", ")}</dd>
             </div>
             <div>
-              <dt className="font-bold text-[#4b637a]">Source Edition Reference</dt>
+              <dt className="font-bold text-[#4b637a]">
+                {isTe ? "పాఠ్యపుస్తక ఆధార రిఫరెన్స్" : "Source Edition Reference"}
+              </dt>
               <dd className="mt-1 text-[#0c2444]">
                 {exp.curriculumReferences.map((r) => `${r.sourceId}: ${r.locator}`).join("; ")}
               </dd>
             </div>
             <div>
-              <dt className="font-bold text-[#4b637a]">Pinned Manifest SHA-256</dt>
+              <dt className="font-bold text-[#4b637a]">
+                {isTe ? "పిన్ చేసిన మేనిఫెస్ట్ SHA-256" : "Pinned Manifest SHA-256"}
+              </dt>
               <dd className="mt-1 break-all font-mono text-[11px] text-[#0c2444]">
                 {exp.manifestSha256}
               </dd>

@@ -188,6 +188,13 @@ export async function POST(req: NextRequest) {
     parsed.data.principalId,
   ]);
 
+  if (!parsed.data.enabled) {
+    await query(
+      `UPDATE auth_session SET revoked_at = now() WHERE principal_id = $1 AND revoked_at IS NULL`,
+      [parsed.data.principalId]
+    );
+  }
+
   await recordAuditEvent({
     schoolId: auth.schoolId,
     actionType: parsed.data.enabled ? "school_admin.principal_enabled" : "school_admin.principal_disabled",

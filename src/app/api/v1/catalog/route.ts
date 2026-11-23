@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { apiError } from "@/lib/auth";
 import { listCatalogExperiments } from "@/lib/catalog";
+import { resolveEducationStage } from "@/lib/education-stages";
 import type { LabSubject } from "@/lib/types";
 
 const VALID_SUBJECTS = new Set<LabSubject>(["chemistry", "physics", "biology"]);
@@ -8,7 +9,7 @@ const VALID_SUBJECTS = new Set<LabSubject>(["chemistry", "physics", "biology"]);
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const labIdParam = searchParams.get("labId") ?? searchParams.get("subject");
-  const gradeParam = searchParams.get("grade");
+  const gradeParam = searchParams.get("grade") ?? searchParams.get("stage");
   const q = searchParams.get("q") ?? undefined;
   const includeMetadata = searchParams.get("meta") === "1";
 
@@ -22,11 +23,15 @@ export async function GET(req: NextRequest) {
 
   let grade: number | undefined;
   if (gradeParam) {
-    const parsed = Number(gradeParam);
-    if (!Number.isInteger(parsed) || parsed < 6 || parsed > 12) {
-      return apiError(400, "STATE_CONFLICT", "Invalid grade; expected integer 6–12.");
+    const resolved = resolveEducationStage(gradeParam);
+    if (!resolved) {
+      return apiError(
+        400,
+        "STATE_CONFLICT",
+        "Invalid grade or stage; expected 6–12 or class-6..intermediate-2."
+      );
     }
-    grade = parsed;
+    grade = resolved.grade;
   }
 
   const rows = await listCatalogExperiments({ subject, grade, q });

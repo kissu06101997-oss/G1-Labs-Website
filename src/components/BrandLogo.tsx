@@ -26,8 +26,12 @@ export function BrandLogo({ href = "/", compact = false }: BrandLogoProps) {
         alt="G1 Virtua Labs"
         width={width}
         height={height}
-        className="block h-auto max-w-[160px] object-contain select-none sm:max-w-none"
-        style={{ width: `${width}px`, aspectRatio: "278 / 50" }}
+        className={`block h-auto object-contain select-none ${
+          compact
+            ? "w-[144px] sm:w-[172px] lg:w-[189px]"
+            : "w-[144px] sm:w-[164px] md:w-[174px] lg:w-[222px]"
+        }`}
+        style={{ aspectRatio: "278 / 50" }}
       />
     </Link>
   );
